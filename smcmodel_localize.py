@@ -2,6 +2,24 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 
+def parameter_model_sample():
+    parameters = {
+        'room_dimensions': [10.0, 20.0],
+        'num_objects': 3,
+        'reference_time_interval': 1.0,
+        'reference_drift': 2.0,
+        'anchor_positions': [
+            [0.0, 0.0],
+            [10.0, 0.0],
+            [0.0, 20.0],
+            [10.0, 20.0]
+        ],
+        'reference_distance': 1.0,
+        'reference_rssi': -60.0,
+        'rssi_std_dev': 5.0
+    }
+    return parameters
+
 def initial_model_sample(num_samples, parameters):
     room_dimensions = parameters['room_dimensions']
     num_objects = parameters['num_objects']
