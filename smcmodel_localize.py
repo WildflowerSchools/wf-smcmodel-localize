@@ -2,21 +2,73 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 
+parameter_structure = {
+    'room_dimensions':{
+        'shape': [2],
+        'dtype': tf.float32
+    },
+    'num_objects':{
+        'shape': [],
+        'dtype': tf.int32
+    },
+    'reference_time_interval': {
+        'shape': [],
+        'dtype': tf.float32
+    },
+    'reference_drift': {
+        'shape': [],
+        'dtype': tf.float32
+    },
+    'anchor_positions': {
+        'shape': [4, 2],
+        'dtype': tf.float32
+    },
+    'reference_distance': {
+        'shape': [],
+        'dtype': tf.float32
+    },
+    'reference_rssi': {
+        'shape': [],
+        'dtype': tf.float32
+    },
+    'rssi_std_dev': {
+        'shape': [],
+        'dtype': tf.float32
+    }
+}
+
+state_structure = {
+    'positions': {
+        'shape': [3, 2],
+        'dtype': tf.float32
+    }
+}
+
+observation_structure = {
+    'rssis': {
+        'shape': [4, 3],
+        'dtype': tf.float32
+    }
+}
+
 def parameter_model_sample():
     parameters = {
-        'room_dimensions': [10.0, 20.0],
-        'num_objects': 3,
-        'reference_time_interval': 1.0,
-        'reference_drift': 2.0,
-        'anchor_positions': [
-            [0.0, 0.0],
-            [10.0, 0.0],
-            [0.0, 20.0],
-            [10.0, 20.0]
-        ],
-        'reference_distance': 1.0,
-        'reference_rssi': -60.0,
-        'rssi_std_dev': 5.0
+        'room_dimensions': tf.constant([10.0, 20.0], dtype=tf.float32),
+        'num_objects': tf.constant(3, dtype=tf.int32),
+        'reference_time_interval': tf.constant(1.0, dtype=tf.float32),
+        'reference_drift': tf.constant(2.0, dtype=tf.float32),
+        'num_anchors': tf.constant(4, dtype = tf.int32),
+        'anchor_positions': tf.constant(
+            [
+                [0.0, 0.0],
+                [10.0, 0.0],
+                [0.0, 20.0],
+                [10.0, 20.0]
+            ],
+            dtype = tf.float32),
+        'reference_distance': tf.constant(1.0, dtype=tf.float32),
+        'reference_rssi': tf.constant(-60.0, dtype=tf.float32),
+        'rssi_std_dev': tf.constant(5.0, dtype=tf.float32)
     }
     return parameters
 
