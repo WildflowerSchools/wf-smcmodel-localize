@@ -56,7 +56,7 @@ def parameter_model_sample():
         'room_dimensions': tf.constant([10.0, 20.0], dtype=tf.float32),
         'num_objects': tf.constant(3, dtype=tf.int32),
         'reference_time_interval': tf.constant(1.0, dtype=tf.float32),
-        'reference_drift': tf.constant(2.0, dtype=tf.float32),
+        'reference_drift': tf.constant(0.1, dtype=tf.float32),
         'num_anchors': tf.constant(4, dtype = tf.int32),
         'anchor_positions': tf.constant(
             [
