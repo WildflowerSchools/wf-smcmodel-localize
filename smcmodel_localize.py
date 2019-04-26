@@ -97,7 +97,8 @@ def localization_model(
         reference_time_interval = parameters['reference_time_interval']
         reference_drift = parameters['reference_drift']
         room_dimensions = parameters['room_dimensions']
-        drift = reference_drift*((current_time - previous_time)/reference_time_interval)
+        time_difference = tf.cast(current_time - previous_time, dtype=tf.float32)
+        drift = reference_drift*((time_difference)/reference_time_interval)
         drift_distribution = tfp.distributions.TruncatedNormal(
             loc = previous_positions,
             scale = drift,
