@@ -92,24 +92,24 @@ def localization_model(
             'positions': initial_positions
         }
         return(initial_state)
-    def transition_model_sample(previous_state, previous_time, current_time, parameters):
-        previous_positions = previous_state['positions']
+    def transition_model_sample(current_state, current_time, next_time, parameters):
+        current_positions = current_state['positions']
         reference_time_interval = parameters['reference_time_interval']
         reference_drift = parameters['reference_drift']
         room_dimensions = parameters['room_dimensions']
-        time_difference = tf.cast(current_time - previous_time, dtype=tf.float32)
+        time_difference = tf.cast(next_time - current_time, dtype=tf.float32)
         drift = reference_drift*((time_difference)/reference_time_interval)
         drift_distribution = tfp.distributions.TruncatedNormal(
-            loc = previous_positions,
+            loc = current_positions,
             scale = drift,
             low = [0.0, 0.0],
             high = room_dimensions
         )
-        current_positions = drift_distribution.sample()
-        current_state = {
-            'positions': current_positions
+        next_positions = drift_distribution.sample()
+        next_state = {
+            'positions': next_positions
         }
-        return(current_state)
+        return(next_state)
 
     def observation_model_sample(state, parameters):
         positions = state['positions']
