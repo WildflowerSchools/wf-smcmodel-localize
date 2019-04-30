@@ -152,7 +152,8 @@ def localization_model(
             loc = mean_rssis,
             scale = rssi_std_dev)
         log_pdfs = rssi_distribution.log_prob(rssis)
-        log_pdf = tf.reduce_sum(log_pdfs, [-2, -1])
+        log_pdfs_nans_removed = tf.where(tf.is_nan(log_pdfs), tf.zeros_like(log_pdfs), log_pdfs)
+        log_pdf = tf.reduce_sum(log_pdfs_nans_removed, [-2, -1])
         return(log_pdf)
     model = smcmodel.SMCModelGeneralTensorflow(
         parameter_structure,
