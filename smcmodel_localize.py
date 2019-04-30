@@ -23,47 +23,47 @@ def localization_model(
     parameter_structure = {
         'room_dimensions':{
             'shape': [num_dimensions],
-            'dtype': tf.float32
+            'type': 'float32'
         },
         'num_objects':{
             'shape': [],
-            'dtype': tf.int32
+            'type': tf.int32
         },
         'reference_time_interval': {
             'shape': [],
-            'dtype': tf.float32
+            'type': 'float32'
         },
         'reference_drift': {
             'shape': [],
-            'dtype': tf.float32
+            'type': 'float32'
         },
         'anchor_positions': {
             'shape': [num_anchors, num_dimensions],
-            'dtype': tf.float32
+            'type': 'float32'
         },
         'reference_distance': {
             'shape': [],
-            'dtype': tf.float32
+            'type': 'float32'
         },
         'reference_mean_rssi': {
             'shape': [],
-            'dtype': tf.float32
+            'type': 'float32'
         },
         'rssi_std_dev': {
             'shape': [],
-            'dtype': tf.float32
+            'type': 'float32'
         }
     }
     state_structure = {
         'positions': {
             'shape': [num_objects, num_dimensions],
-            'dtype': tf.float32
+            'type': 'float32'
         }
     }
     observation_structure = {
         'rssis': {
             'shape': [num_anchors, num_objects],
-            'dtype': tf.float32
+            'type': 'float32'
         }
     }
     def parameter_model_sample():
