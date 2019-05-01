@@ -66,6 +66,16 @@ def localization_model(
             'type': 'float32'
         }
     }
+    state_summary_structure = {
+        'positions_mean': {
+            'shape': [num_objects, num_dimensions],
+            'type': 'float32'
+        },
+        'positions_sd': {
+            'shape': [num_objects, num_dimensions],
+            'type': 'float32'
+        }
+    }
     def parameter_model_sample():
         parameters = {
             'room_dimensions': tf.constant(room_dimensions, dtype=tf.float32),
@@ -155,14 +165,32 @@ def localization_model(
         log_pdfs_nans_removed = tf.where(tf.is_nan(log_pdfs), tf.zeros_like(log_pdfs), log_pdfs)
         log_pdf = tf.reduce_sum(log_pdfs_nans_removed, [-2, -1])
         return(log_pdf)
+    def state_summary(state, log_weights, parameters):
+        positions = state['positions']
+        positions_squared = tf.square(positions)
+        weights = tf.exp(log_weights)
+        weights_sum = tf.reduce_sum(weights)
+        positions_mean = tf.tensordot(weights, positions, 1)/weights_sum
+        positions_squared_mean = tf.tensordot(weights, positions_squared, 1)/weights_sum
+        positions_var = positions_squared_mean - tf.square(positions_mean)
+        positions_sd = tf.sqrt(positions_var)
+        positions_mean_expanded = tf.expand_dims(positions_mean, 0)
+        positions_sd_expanded = tf.expand_dims(positions_sd, 0)
+        state_summary = {
+            'positions_mean': positions_mean_expanded,
+            'positions_sd': positions_sd_expanded
+        }
+        return state_summary
     model = smcmodel.SMCModelGeneralTensorflow(
         parameter_structure,
         state_structure,
         observation_structure,
+        state_summary_structure,
         parameter_model_sample,
         initial_model_sample,
         transition_model_sample,
         observation_model_sample,
-        observation_model_pdf
+        observation_model_pdf,
+        state_summary
     )
     return model
