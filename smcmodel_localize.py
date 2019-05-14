@@ -20,6 +20,7 @@ def localization_model(
     reference_mean_rssi = -60.0,
     mean_rssi_slope = -20.0,
     rssi_std_dev = 5.0):
+
     parameter_structure = {
         'room_dimensions':{
             'shape': [num_dimensions],
@@ -54,18 +55,21 @@ def localization_model(
             'type': 'float32'
         }
     }
+
     state_structure = {
         'positions': {
             'shape': [num_objects, num_dimensions],
             'type': 'float32'
         }
     }
+
     observation_structure = {
         'rssis': {
             'shape': [num_anchors, num_objects],
             'type': 'float32'
         }
     }
+
     state_summary_structure = {
         'positions_mean': {
             'shape': [num_objects, num_dimensions],
@@ -80,6 +84,7 @@ def localization_model(
             'type': 'int32'
         }
     }
+
     def parameter_model_sample():
         parameters = {
             'room_dimensions': tf.constant(room_dimensions, dtype=tf.float32),
@@ -94,6 +99,7 @@ def localization_model(
             'rssi_std_dev': tf.constant(rssi_std_dev, dtype=tf.float32)
         }
         return parameters
+
     def initial_model_sample(num_samples, parameters):
         room_dimensions = parameters['room_dimensions']
         num_objects = parameters['num_objects']
@@ -106,6 +112,7 @@ def localization_model(
             'positions': initial_positions
         }
         return(initial_state)
+
     def transition_model_sample(current_state, current_time, next_time, parameters):
         current_positions = current_state['positions']
         reference_time_interval = parameters['reference_time_interval']
@@ -147,6 +154,7 @@ def localization_model(
             'rssis': rssis
         }
         return(observation)
+
     def observation_model_pdf(state, observation, parameters):
         positions = state['positions']
         rssis = observation['rssis']
@@ -169,6 +177,7 @@ def localization_model(
         log_pdfs_nans_removed = tf.where(tf.is_nan(log_pdfs), tf.zeros_like(log_pdfs), log_pdfs)
         log_pdf = tf.reduce_sum(log_pdfs_nans_removed, [-2, -1])
         return(log_pdf)
+
     def state_summary(state, log_weights, resample_indices, parameters):
         positions = state['positions']
         positions_squared = tf.square(positions)
