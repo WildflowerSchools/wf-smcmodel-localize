@@ -132,7 +132,7 @@ def localization_model(
         }
         return(next_state)
 
-    def observation_model_sample(state, parameters):
+    def rssi_distribution_function(state, parameters):
         positions = state['positions']
         anchor_positions = parameters['anchor_positions']
         reference_distance = parameters['reference_distance']
@@ -149,6 +149,10 @@ def localization_model(
         rssi_distribution = tfp.distributions.Normal(
             loc = mean_rssis,
             scale = rssi_std_dev)
+        return(rssi_distribution)
+
+    def observation_model_sample(state, parameters):
+        rssi_distribution = rssi_distribution_function(state, parameters)
         rssis = rssi_distribution.sample()
         observation = {
             'rssis': rssis
@@ -156,23 +160,8 @@ def localization_model(
         return(observation)
 
     def observation_model_pdf(state, observation, parameters):
-        positions = state['positions']
         rssis = observation['rssis']
-        anchor_positions = parameters['anchor_positions']
-        reference_distance = parameters['reference_distance']
-        reference_mean_rssi = parameters['reference_mean_rssi']
-        mean_rssi_slope = parameters['mean_rssi_slope']
-        rssi_std_dev = parameters['rssi_std_dev']
-        relative_positions = tf.subtract(
-            tf.expand_dims(positions, axis = 1),
-            tf.expand_dims(tf.expand_dims(anchor_positions, 0), axis = 2))
-        distances = tf.norm(relative_positions, axis = -1)
-        log10_distances = tf.log(distances)/tf.log(10.0)
-        log10_reference_distance = tf.log(reference_distance)/tf.log(10.0)
-        mean_rssis = reference_mean_rssi + mean_rssi_slope*(log10_distances - log10_reference_distance)
-        rssi_distribution = tfp.distributions.Normal(
-            loc = mean_rssis,
-            scale = rssi_std_dev)
+        rssi_distribution = rssi_distribution_function(state, parameters)
         log_pdfs = rssi_distribution.log_prob(rssis)
         log_pdfs_nans_removed = tf.where(tf.is_nan(log_pdfs), tf.zeros_like(log_pdfs), log_pdfs)
         log_pdf = tf.reduce_sum(log_pdfs_nans_removed, [-2, -1])
