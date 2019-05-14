@@ -189,10 +189,25 @@ def localization_model(
         }
         return(observation)
 
+    def observation_model_sample_some_successful(state, parameters):
+        ping_success_rate = parameters['ping_success_rate']
+        observation_all_rssis = observation_model_sample_all_rssis(state, parameters)
+        all_rssis = observation_all_rssis['rssis']
+        ones = tfp.distributions.Bernoulli(probs = ping_success_rate).sample(tf.shape(all_rssis))
+        trues = tf.cast(ones, dtype = tf.bool)
+        all_nan = tf.fill(tf.shape(all_rssis), np.nan)
+        chosen_values = tf.where(trues, all_rssis, all_nan)
+        observation = {
+            'rssis': chosen_values
+        }
+        return(observation)
+
     if ping_success_rate == 1.0:
         observation_model_sample = observation_model_sample_all_successful
     elif ping_success_rate == 0.0:
         observation_model_sample = observation_model_sample_one_successful
+    elif ping_success_rate > 0.0 and ping_success_rate < 1.0:
+        observation_model_sample = observation_model_sample_some_successful
     else:
         raise ValueError('Ping success rate out of range')
 
