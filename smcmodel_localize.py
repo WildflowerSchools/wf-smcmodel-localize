@@ -7,7 +7,7 @@ def localization_model(
     num_objects = 3,
     num_anchors = 4,
     num_dimensions = 2,
-    room_dimensions = [10.0, 20.0],
+    room_corners = [[0.0, 0.0], [10.0, 20.0]],
     anchor_positions = [
         [0.0, 0.0],
         [10.0, 0.0],
@@ -22,11 +22,11 @@ def localization_model(
     rssi_std_dev = 5.0):
 
     parameter_structure = {
-        'room_dimensions':{
-            'shape': [num_dimensions],
+        'room_corners': {
+            'shape': [2, num_dimensions],
             'type': 'float32'
         },
-        'num_objects':{
+        'num_objects': {
             'shape': [],
             'type': 'int32'
         },
@@ -87,7 +87,7 @@ def localization_model(
 
     def parameter_model_sample():
         parameters = {
-            'room_dimensions': tf.constant(room_dimensions, dtype=tf.float32),
+            'room_corners': tf.constant(room_corners, dtype=tf.float32),
             'num_objects': tf.constant(num_objects, dtype=tf.int32),
             'reference_time_interval': tf.constant(reference_time_interval, dtype=tf.float32),
             'reference_drift': tf.constant(reference_drift, dtype=tf.float32),
@@ -101,11 +101,11 @@ def localization_model(
         return parameters
 
     def initial_model_sample(num_samples, parameters):
-        room_dimensions = parameters['room_dimensions']
+        room_corners = parameters['room_corners']
         num_objects = parameters['num_objects']
         room_distribution = tfp.distributions.Uniform(
-            low = [0.0, 0.0],
-            high= room_dimensions
+            low = room_corners[0],
+            high= room_corners[1]
         )
         initial_positions = room_distribution.sample((num_samples, num_objects))
         initial_state = {
@@ -117,14 +117,14 @@ def localization_model(
         current_positions = current_state['positions']
         reference_time_interval = parameters['reference_time_interval']
         reference_drift = parameters['reference_drift']
-        room_dimensions = parameters['room_dimensions']
+        room_corners = parameters['room_corners']
         time_difference = tf.cast(next_time - current_time, dtype=tf.float32)
         drift = reference_drift*tf.sqrt(time_difference/reference_time_interval)
         drift_distribution = tfp.distributions.TruncatedNormal(
             loc = current_positions,
             scale = drift,
-            low = [0.0, 0.0],
-            high = room_dimensions
+            low = room_corners[0],
+            high= room_corners[1]
         )
         next_positions = drift_distribution.sample()
         next_state = {
