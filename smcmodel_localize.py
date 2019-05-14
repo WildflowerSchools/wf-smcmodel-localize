@@ -27,7 +27,7 @@ def localization_model(
         },
         'num_objects':{
             'shape': [],
-            'type': tf.int32
+            'type': 'int32'
         },
         'reference_time_interval': {
             'shape': [],
@@ -74,6 +74,10 @@ def localization_model(
         'positions_sd': {
             'shape': [num_objects, num_dimensions],
             'type': 'float32'
+        },
+        'num_resample_indices': {
+            'shape': [],
+            'type': 'int32'
         }
     }
     def parameter_model_sample():
@@ -165,7 +169,7 @@ def localization_model(
         log_pdfs_nans_removed = tf.where(tf.is_nan(log_pdfs), tf.zeros_like(log_pdfs), log_pdfs)
         log_pdf = tf.reduce_sum(log_pdfs_nans_removed, [-2, -1])
         return(log_pdf)
-    def state_summary(state, log_weights, parameters):
+    def state_summary(state, log_weights, resample_indices, parameters):
         positions = state['positions']
         positions_squared = tf.square(positions)
         weights = tf.exp(log_weights)
@@ -174,13 +178,18 @@ def localization_model(
         positions_squared_mean = tf.tensordot(weights, positions_squared, 1)/weights_sum
         positions_var = positions_squared_mean - tf.square(positions_mean)
         positions_sd = tf.sqrt(positions_var)
+        unique_resample_indices, _ = tf.unique(resample_indices)
+        num_resample_indices = tf.size(unique_resample_indices)
         positions_mean_expanded = tf.expand_dims(positions_mean, 0)
         positions_sd_expanded = tf.expand_dims(positions_sd, 0)
+        num_resample_indices_expanded = tf.expand_dims(num_resample_indices, 0)
         state_summary = {
             'positions_mean': positions_mean_expanded,
-            'positions_sd': positions_sd_expanded
+            'positions_sd': positions_sd_expanded,
+            'num_resample_indices': num_resample_indices_expanded
         }
         return state_summary
+
     model = smcmodel.SMCModelGeneralTensorflow(
         parameter_structure,
         state_structure,
