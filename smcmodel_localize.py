@@ -19,7 +19,8 @@ def localization_model(
     reference_distance = 1.0,
     reference_mean_rssi = -60.0,
     mean_rssi_slope = -20.0,
-    rssi_std_dev = 5.0):
+    rssi_std_dev = 5.0,
+    ping_success_rate = 1.0):
 
     parameter_structure = {
         'room_corners': {
@@ -51,6 +52,10 @@ def localization_model(
             'type': 'float32'
         },
         'rssi_std_dev': {
+            'shape': [],
+            'type': 'float32'
+        },
+        'ping_success_rate': {
             'shape': [],
             'type': 'float32'
         }
@@ -96,7 +101,8 @@ def localization_model(
             'reference_distance': tf.constant(reference_distance, dtype=tf.float32),
             'reference_mean_rssi': tf.constant(reference_mean_rssi, dtype=tf.float32),
             'mean_rssi_slope': tf.constant(mean_rssi_slope, dtype=tf.float32),
-            'rssi_std_dev': tf.constant(rssi_std_dev, dtype=tf.float32)
+            'rssi_std_dev': tf.constant(rssi_std_dev, dtype=tf.float32),
+            'ping_success_rate': tf.constant(ping_success_rate, dtype=tf.float32)
         }
         return parameters
 
@@ -151,13 +157,44 @@ def localization_model(
             scale = rssi_std_dev)
         return(rssi_distribution)
 
-    def observation_model_sample(state, parameters):
+    def observation_model_sample_all_rssis(state, parameters):
         rssi_distribution = rssi_distribution_function(state, parameters)
-        rssis = rssi_distribution.sample()
+        all_rssis = rssi_distribution.sample()
+        observation_all_rssis = {
+            'rssis': all_rssis
+        }
+        return(observation_all_rssis)
+
+    def observation_model_sample_all_successful(state, parameters):
+        observation_all_rssis = observation_model_sample_all_rssis(state, parameters)
+        observation = observation_all_rssis
+        return(observation)
+
+    def observation_model_sample_one_successful(state, parameters):
+        observation_all_rssis = observation_model_sample_all_rssis(state, parameters)
+        all_rssis = observation_all_rssis['rssis']
+        num_samples = tf.shape(all_rssis)[0]
+        num_elements = tf.size(all_rssis[0])
+        logits = tf.zeros([num_samples, num_elements])
+        choices = tf.transpose(tf.random.categorical(logits, 1))[0]
+        range_vector = tf.cast(tf.range(num_samples), tf.int64)
+        indices = tf.stack([range_vector, choices], axis = 1)
+        ones_flat = tf.scatter_nd(indices, tf.ones([num_samples]), [num_samples, num_elements])
+        trues_flat = tf.cast(ones_flat, dtype = tf.bool)
+        trues = tf.reshape(trues_flat, tf.shape(all_rssis))
+        all_nan = tf.fill(tf.shape(all_rssis), np.nan)
+        chosen_values = tf.where(trues, all_rssis, all_nan)
         observation = {
-            'rssis': rssis
+            'rssis': chosen_values
         }
         return(observation)
+
+    if ping_success_rate == 1.0:
+        observation_model_sample = observation_model_sample_all_successful
+    elif ping_success_rate == 0.0:
+        observation_model_sample = observation_model_sample_one_successful
+    else:
+        raise ValueError('Ping success rate out of range')
 
     def observation_model_pdf(state, observation, parameters):
         rssis = observation['rssis']
