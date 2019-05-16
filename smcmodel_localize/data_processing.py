@@ -44,3 +44,16 @@ def parse_rssi_dataframe(df, timestamp_column, anchor_id_column, object_id_colum
         'object_ids': object_ids,
         'rssis': rssis
     }
+
+def parse_rssi_dataframe_separate_objects(df, timestamp_column, anchor_id_column, object_id_column, rssi_column):
+    rssi_arrays_dict = {}
+    for group_name, df_single_object in df.groupby(object_id_column):
+        object_id = group_name
+        print('Processing data for object {} ({} rows)...'.format(object_id, len(df_single_object)))
+        rssi_arrays_dict[object_id] = parse_rssi_dataframe(
+            df_single_object,
+            timestamp_column,
+            anchor_id_column,
+            object_id_column,
+            rssi_column)
+    return rssi_arrays_dict
