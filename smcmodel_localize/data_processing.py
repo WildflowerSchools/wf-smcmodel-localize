@@ -138,3 +138,20 @@ def npz_file_to_arrays(directory, filename):
         'rssis': np.asarray(npz_data['rssis'])
     }
     return data
+
+def get_object_info_from_csv_file(object_ids, directory, filename, object_id_column, object_name_column, fixed_object_positions_columns):
+    object_info_df = pd.DataFrame.from_dict({'object_id': object_ids})
+    path = os.path.join(directory, filename)
+    file_df = pd.read_csv(path)
+    object_info_df = object_info_df.merge(
+        right = file_df,
+        how = 'left',
+        left_on = 'object_id',
+        right_on = object_id_column)
+    object_names = object_info_df[object_name_column].values.tolist()
+    fixed_object_positions = object_info_df[fixed_object_positions_columns].values
+    object_info = {
+        'object_names': object_names,
+        'fixed_object_positions': fixed_object_positions
+    }
+    return object_info
