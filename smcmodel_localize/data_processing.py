@@ -54,11 +54,12 @@ def dataframe_to_arrays_by_object(df, timestamp_column, object_id_column, anchor
         object_id = group_name
         print('Processing data for object {} ({} rows)...'.format(object_id, len(df_single_object)))
         arrays_dict[object_id] = dataframe_to_arrays(
-            df_single_object,
-            timestamp_column,
-            anchor_id_column,
-            object_id_column,
-            rssi_column)
+            df = df_single_object,
+            timestamp_column = timestamp_column,
+            object_id_column = object_id_column,
+            anchor_id_column = anchor_id_column,
+            rssi_column = rssi_column
+        )
     return arrays_dict
 
 def csv_files_by_anchor_to_dataframe(directory, filenames, anchor_ids, timestamp_column, object_id_column, anchor_id_column, rssi_column):
@@ -103,9 +104,10 @@ def dataframe_to_files_by_object(df, directory, filename_stem, object_id_column)
     for object_id, df_single_object in df.groupby(object_id_column):
         extended_filename_stem = filename_stem + '_' + slugify.slugify(object_id)
         dataframe_to_files(
-            df_single_object,
-            directory,
-            extended_filename_stem)
+            df = df_single_object,
+            directory = directory,
+            filename_stem = extended_filename_stem
+        )
 
 def arrays_to_file(arrays, directory, filename_stem):
     npz_path = os.path.join(
@@ -117,6 +119,7 @@ def arrays_by_object_to_files_by_object(arrays_by_object, directory, filename_st
     for object_id, arrays in arrays_by_object.items():
         extended_filename_stem = filename_stem + '_' + slugify.slugify(object_id)
         arrays_to_file(
-            arrays,
-            directory,
-            extended_filename_stem)
+            arrays = arrays,
+            directory = directory,
+            filename_stem = extended_filename_stem
+        )
