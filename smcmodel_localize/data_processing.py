@@ -1,3 +1,4 @@
+import datetime_conversion
 import pandas as pd
 import numpy as np
 import slugify
@@ -90,7 +91,7 @@ def csv_files_by_anchor_to_dataframe(directory, filenames, anchor_ids, timestamp
     df_all.reset_index(inplace = True, drop = True)
     return df_all
 
-def dataframe_to_files(df, directory, filename_stem):
+def dataframe_to_pkl_csv_files(df, directory, filename_stem):
     pickle_path = os.path.join(
         directory, filename_stem + '.pkl')
     csv_path = os.path.join(
@@ -100,7 +101,7 @@ def dataframe_to_files(df, directory, filename_stem):
     print('Writing to {}'.format(csv_path))
     df.to_csv(csv_path, index = False)
 
-def dataframe_to_files_by_object(df, directory, filename_stem, object_id_column):
+def dataframe_to_pkl_csv_files_by_object(df, directory, filename_stem, object_id_column):
     for object_id, df_single_object in df.groupby(object_id_column):
         extended_filename_stem = filename_stem + '_' + slugify.slugify(object_id)
         dataframe_to_files(
@@ -109,13 +110,13 @@ def dataframe_to_files_by_object(df, directory, filename_stem, object_id_column)
             filename_stem = extended_filename_stem
         )
 
-def arrays_to_file(arrays, directory, filename_stem):
+def arrays_to_npz_file(arrays, directory, filename_stem):
     npz_path = os.path.join(
         directory, filename_stem + '.npz')
     print('Writing to {}'.format(npz_path))
     np.savez_compressed(npz_path, **arrays)
 
-def arrays_by_object_to_files_by_object(arrays_by_object, directory, filename_stem):
+def arrays_by_object_to_npz_files_by_object(arrays_by_object, directory, filename_stem):
     for object_id, arrays in arrays_by_object.items():
         extended_filename_stem = filename_stem + '_' + slugify.slugify(object_id)
         arrays_to_file(
@@ -123,3 +124,17 @@ def arrays_by_object_to_files_by_object(arrays_by_object, directory, filename_st
             directory = directory,
             filename_stem = extended_filename_stem
         )
+
+def npz_file_to_arrays(directory, filename):
+    path = os.path.join(directory, filename)
+    npz_data = np.load(path)
+    data = {
+        'num_anchors': npz_data['num_anchors'].item(),
+        'num_objects': npz_data['num_objects'].item(),
+        'num_timestamps': npz_data['num_timestamps'].item(),
+        'anchor_ids': npz_data['anchor_ids'].tolist(),
+        'object_ids': npz_data['object_ids'].tolist(),
+        'timestamps': datetime_conversion.to_posix_timestamps(npz_data['timestamps']),
+        'rssis': np.asarray(npz_data['rssis'])
+    }
+    return data
