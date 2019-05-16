@@ -1,8 +1,9 @@
 import pandas as pd
 import numpy as np
 import time
+import os
 
-def parse_rssi_dataframe(df, timestamp_column, anchor_id_column, object_id_column, rssi_column):
+def dataframe_to_arrays(df, timestamp_column, object_id_column, anchor_id_column, rssi_column):
     timestamps = np.sort(df[timestamp_column].unique())
     anchor_ids = np.sort(df[anchor_id_column].unique())
     object_ids = np.sort(df[object_id_column].unique())
@@ -45,7 +46,7 @@ def parse_rssi_dataframe(df, timestamp_column, anchor_id_column, object_id_colum
         'rssis': rssis
     }
 
-def parse_rssi_dataframe_separate_objects(df, timestamp_column, anchor_id_column, object_id_column, rssi_column):
+def dataframe_to_arrays_by_object(df, timestamp_column, object_id_column, anchor_id_column, rssi_column):
     rssi_arrays_dict = {}
     for group_name, df_single_object in df.groupby(object_id_column):
         object_id = group_name
@@ -57,3 +58,31 @@ def parse_rssi_dataframe_separate_objects(df, timestamp_column, anchor_id_column
             object_id_column,
             rssi_column)
     return rssi_arrays_dict
+
+def csv_files_by_anchor_to_dataframe(directory, filenames, anchor_ids, timestamp_column, object_id_column, anchor_id_column, rssi_column):
+    num_filenames = len(filenames)
+    num_anchor_ids = len(anchor_ids)
+    if num_filenames != num_anchor_ids:
+        raise ValueError('Filename list has {} elements but anchor ID list has {} elements'.format(
+            num_filenames,
+            num_anchor_ids
+        ))
+    dfs = []
+    print('Processing data from {} files'.format(num_filenames))
+    for filename_index, filename in enumerate(filenames):
+        anchor_id = anchor_ids[filename_index]
+        path = os.path.join(
+            directory,
+            filename
+        )
+        df = pd.read_csv(path, parse_dates = [timestamp_column])
+        start = df[timestamp_column].min()
+        end = df[timestamp_column].max()
+        print('{} (anchor ID {}): {} to {} ({} rows)'.format(filename, anchor_id, start, end, len(df.index)))
+        df[anchor_id_column] = anchor_id
+        dfs.append(df)
+    df_all = pd.concat(dfs, ignore_index = True)
+    df_all = df_all[[timestamp_column, object_id_column, anchor_id_column, rssi_column]]
+    df_all.sort_values(timestamp_column, inplace=True)
+    df_all.reset_index(inplace = True, drop = True)
+    return df_all
