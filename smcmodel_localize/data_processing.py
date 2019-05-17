@@ -155,3 +155,20 @@ def get_object_info_from_csv_file(object_ids, directory, filename, object_id_col
         'fixed_object_positions': fixed_object_positions
     }
     return object_info
+
+def get_anchor_info_from_csv_file(anchor_ids, directory, filename, anchor_id_column, anchor_name_column, anchor_positions_columns):
+    anchor_info_df = pd.DataFrame.from_dict({'anchor_id': anchor_ids})
+    path = os.path.join(directory, filename)
+    file_df = pd.read_csv(path)
+    anchor_info_df = anchor_info_df.merge(
+        right = file_df,
+        how = 'left',
+        left_on = 'anchor_id',
+        right_on = anchor_id_column)
+    anchor_names = anchor_info_df[anchor_name_column].values.tolist()
+    anchor_positions = anchor_info_df[anchor_positions_columns].values
+    anchor_info = {
+        'anchor_names': anchor_names,
+        'anchor_positions': anchor_positions
+    }
+    return anchor_info
