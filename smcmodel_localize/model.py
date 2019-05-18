@@ -102,13 +102,13 @@ def localization_model(
             'type': 'float32'
         }
     }
-
-    observation_structure = {
-        'rssis': {
-            'shape': [num_anchors, num_objects],
-            'type': 'float32'
-        }
-    }
+    observation_structure = observation_structure_generator(num_anchors, num_objects)
+    # observation_structure = {
+    #     'rssis': {
+    #         'shape': [num_anchors, num_objects],
+    #         'type': 'float32'
+    #     }
+    # }
 
     state_summary_structure = {
         'moving_object_positions_mean': {
@@ -312,3 +312,12 @@ def localization_model(
         state_summary
     )
     return model
+
+def observation_structure_generator(num_anchors, num_objects):
+    observation_structure = {
+        'rssis': {
+            'shape': [num_anchors, num_objects],
+            'type': 'float32'
+        }
+    }
+    return observation_structure

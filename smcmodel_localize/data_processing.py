@@ -1,3 +1,5 @@
+import smcmodel_localize.model
+from smcmodel.databases.memory import DatabaseMemory
 import datetime_conversion
 import pandas as pd
 import numpy as np
@@ -62,6 +64,16 @@ def dataframe_to_arrays_by_object(df, timestamp_column, object_id_column, anchor
             rssi_column = rssi_column
         )
     return arrays_dict
+
+def arrays_to_observation_database(arrays):
+    observation_structure = smcmodel_localize.model.observation_structure_generator(arrays['num_anchors'], arrays['num_objects'])
+    observation_time_series_data = {'rssis': arrays['rssis']}
+    observation_database = DatabaseMemory(
+        structure = observation_structure,
+        num_samples = 1,
+        timestamps = arrays['timestamps'],
+        time_series_data = observation_time_series_data)
+    return observation_database
 
 def csv_files_by_anchor_to_dataframe(directory, filenames, anchor_ids, timestamp_column, object_id_column, anchor_id_column, rssi_column):
     num_filenames = len(filenames)
