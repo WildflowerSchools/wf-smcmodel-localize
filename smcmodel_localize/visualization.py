@@ -1,9 +1,9 @@
 import datetime_conversion
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-# from pandas.plotting import register_matplotlib_converters
+from pandas.plotting import register_matplotlib_converters
 
-# register_matplotlib_converters()
+register_matplotlib_converters()
 
 def plot_positions(
     state_summary_database,
@@ -17,7 +17,9 @@ def plot_positions(
         start_timestamp = start_timestamp,
         end_timestamp = end_timestamp)
     num_objects = state_summary_time_series['moving_object_positions_mean'].shape[2]
-    state_summary_timestamps_pd = datetime_conversion.to_pandas_timestamps_utc(state_summary_timestamps)
+    print(state_summary_timestamps)
+    state_summary_timestamps_np = datetime_conversion.to_numpy_datetimes(state_summary_timestamps)
+    print(state_summary_timestamps_np)
     date_formatter = mdates.DateFormatter('%H:%M')
     for object_index in range(num_objects):
         if object_names is not None:
@@ -29,7 +31,7 @@ def plot_positions(
         for position_axis_index, position_axis_name in enumerate(position_axes_names):
             fig, ax = plt.subplots()
             plt.plot(
-                state_summary_timestamps_pd[:],
+                state_summary_timestamps_np[:],
                 state_summary_time_series['moving_object_positions_mean'][:, 0, object_index, position_axis_index],
                 color='blue',
                 label = 'Mean estimate'
