@@ -7,6 +7,21 @@ import slugify
 import time
 import os
 
+def csv_file_to_dataframe(directory, filename, timestamp_column = 'timestamp'):
+    path = os.path.join(directory, filename)
+    dataframe = pd.read_csv(path, parse_dates = [timestamp_column])
+    return dataframe
+
+def add_ids_to_dataframe(dataframe, **kwargs):
+    for column_name, column_value in kwargs.items():
+        dataframe[column_name] = column_value
+    return dataframe
+
+def csv_file_to_dataframe_add_ids(directory, filename, timestamp_column = 'timestamp', **kwargs):
+    dataframe = csv_file_to_dataframe(directory, filename, timestamp_column)
+    dataframe = add_ids_to_dataframe(dataframe, **kwargs)
+    return dataframe
+
 def csv_files_by_anchor_to_dataframe(directory, filenames, anchor_ids, timestamp_column, object_id_column, anchor_id_column, rssi_column):
     num_filenames = len(filenames)
     num_anchor_ids = len(anchor_ids)
