@@ -34,6 +34,67 @@ def csv_file_to_dataframe_add_ids(
     dataframe = add_ids_to_dataframe(dataframe, **kwargs)
     return dataframe
 
+def csv_files_to_dataframe(
+    directories,
+    filename_parser = None,
+    anchor_ids = None,
+    object_ids = None,
+    start_timestamp = None,
+    end_timestamp = None,
+    timestamp_column_name = 'timestamp',
+    object_id_column_name = 'object_id',
+    anchor_id_column_name = 'anchor_id',
+    rssi_column_name = 'rssi'
+):
+    dataframes = []
+    for directory in directories:
+        filenames = os.listdir(directory)
+        for filename in filenames:
+            if filename_parser is not None:
+                ids = filename_parser(filename)
+                if ids is not None:
+                    dataframe = csv_file_to_dataframe(
+                        directory,
+                        filename,
+                        timestamp_column_name)
+                    dataframe = add_ids_to_dataframe(
+                        dataframe,
+                        **ids
+                    )
+                    dataframe = filter_dataframe(
+                        dataframe,
+                        anchor_ids,
+                        object_ids,
+                        start_timestamp,
+                        end_timestamp,
+                        timestamp_column_name,
+                        object_id_column_name,
+                        anchor_id_column_name
+                    )
+                    dataframes.append(dataframe)
+            else:
+                    dataframe = csv_file_to_dataframe(
+                        directory,
+                        filename,
+                        timestamp_column_name)
+                    dataframe = filter_dataframe(
+                        dataframe,
+                        anchor_ids,
+                        object_ids,
+                        start_timestamp,
+                        end_timestamp,
+                        timestamp_column_name,
+                        object_id_column_name,
+                        anchor_id_column_name
+                    )
+                    dataframes.append(dataframe)
+    dataframe_all = pd.concat(dataframes, ignore_index = True)
+    dataframe_all = dataframe_all[[timestamp_column_name, object_id_column_name, anchor_id_column_name, rssi_column_name]]
+    dataframe_all.sort_values(timestamp_column_name, inplace=True)
+    dataframe_all.reset_index(inplace = True, drop = True)
+    return dataframe_all
+
+
 def csv_files_by_anchor_to_dataframe(
     directory,
     filenames,
@@ -96,7 +157,10 @@ def filter_dataframe(
     else:
         end_timestamp_boolean = True
     combined_boolean = anchor_id_boolean & object_id_boolean & start_timestamp_boolean & end_timestamp_boolean
-    dataframe_filtered = dataframe[combined_boolean]
+    if combined_boolean != True:
+        dataframe_filtered = dataframe[combined_boolean]
+    else:
+        dataframe_filtered = dataframe
     return dataframe_filtered
 
 def dataframe_to_arrays(
