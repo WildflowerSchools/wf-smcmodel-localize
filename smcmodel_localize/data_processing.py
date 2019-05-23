@@ -69,6 +69,36 @@ def csv_files_by_anchor_to_dataframe(
     dataframe_all.reset_index(inplace = True, drop = True)
     return dataframe_all
 
+def filter_dataframe(
+    dataframe,
+    anchor_ids = None,
+    object_ids = None,
+    start_timestamp = None,
+    end_timestamp = None,
+    timestamp_column_name = 'timestamp',
+    object_id_column_name = 'object_id',
+    anchor_id_column_name = 'anchor_id'
+):
+    if anchor_ids is not None:
+        anchor_id_boolean = dataframe[anchor_id_column_name].isin(anchor_ids)
+    else:
+        anchor_id_boolean = True
+    if object_ids is not None:
+        object_id_boolean = dataframe[object_id_column_name].isin(object_ids)
+    else:
+        object_id_boolean = True
+    if start_timestamp is not None:
+        start_timestamp_boolean = (dataframe[timestamp_column_name] >= start_timestamp)
+    else:
+        start_timestamp_boolean = True
+    if end_timestamp is not None:
+        end_timestamp_boolean = (dataframe[timestamp_column_name] <= end_timestamp)
+    else:
+        end_timestamp_boolean = True
+    combined_boolean = anchor_id_boolean & object_id_boolean & start_timestamp_boolean & end_timestamp_boolean
+    dataframe_filtered = dataframe[combined_boolean]
+    return dataframe_filtered
+
 def dataframe_to_arrays(
     dataframe,
     timestamp_column_name = 'timestamp',
