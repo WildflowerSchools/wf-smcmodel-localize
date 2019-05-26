@@ -7,13 +7,31 @@ import slugify
 import time
 import os
 
+DEFAULT_TIMESTAMP_COLUMN_NAME = 'timestamp'
+DEFAULT_ANCHOR_ID_COLUMN_NAME = 'anchor_id'
+DEFAULT_OBJECT_ID_COLUMN_NAME = 'object_id'
+DEFAULT_MEASUREMENT_VALUE_COLUMN_NAME = 'rssi'
+
 def csv_file_to_dataframe(
     directory,
     filename,
-    timestamp_column_name = 'timestamp'
+    timestamp_column_name = DEFAULT_TIMESTAMP_COLUMN_NAME,
+    anchor_id_column_name = DEFAULT_ANCHOR_ID_COLUMN_NAME,
+    object_id_column_name = DEFAULT_OBJECT_ID_COLUMN_NAME,
+    measurement_value_column_name = DEFAULT_MEASUREMENT_VALUE_COLUMN_NAME
 ):
     path = os.path.join(directory, filename)
     dataframe = pd.read_csv(path, parse_dates = [timestamp_column_name])
+    dataframe.rename(
+        mapper = {
+            timestamp_column_name: DEFAULT_TIMESTAMP_COLUMN_NAME,
+            anchor_id_column_name: DEFAULT_ANCHOR_ID_COLUMN_NAME,
+            object_id_column_name: DEFAULT_OBJECT_ID_COLUMN_NAME,
+            measurement_value_column_name: DEFAULT_MEASUREMENT_VALUE_COLUMN_NAME
+        },
+        axis = 'columns',
+        inplace = True
+    )
     return dataframe
 
 def add_ids_to_dataframe(
@@ -24,16 +42,6 @@ def add_ids_to_dataframe(
         dataframe[column_name] = column_value
     return dataframe
 
-def csv_file_to_dataframe_add_ids(
-    directory,
-    filename,
-    timestamp_column_name = 'timestamp',
-    **kwargs
-):
-    dataframe = csv_file_to_dataframe(directory, filename, timestamp_column_name)
-    dataframe = add_ids_to_dataframe(dataframe, **kwargs)
-    return dataframe
-
 def csv_files_to_dataframe(
     directories,
     filename_parser = None,
@@ -41,10 +49,10 @@ def csv_files_to_dataframe(
     object_ids = None,
     start_timestamp = None,
     end_timestamp = None,
-    timestamp_column_name = 'timestamp',
-    object_id_column_name = 'object_id',
-    anchor_id_column_name = 'anchor_id',
-    rssi_column_name = 'rssi'
+    timestamp_column_name = DEFAULT_TIMESTAMP_COLUMN_NAME,
+    anchor_id_column_name = DEFAULT_ANCHOR_ID_COLUMN_NAME,
+    object_id_column_name = DEFAULT_OBJECT_ID_COLUMN_NAME,
+    measurement_value_column_name = DEFAULT_MEASUREMENT_VALUE_COLUMN_NAME
 ):
     dataframes = []
     for directory in directories:
@@ -54,9 +62,13 @@ def csv_files_to_dataframe(
                 ids = filename_parser(filename)
                 if ids is not None:
                     dataframe = csv_file_to_dataframe(
-                        directory,
-                        filename,
-                        timestamp_column_name)
+                        directory = directory,
+                        filename = filename,
+                        timestamp_column_name = timestamp_column_name,
+                        anchor_id_column_name = anchor_id_column_name,
+                        object_id_column_name = object_id_column_name,
+                        measurement_value_column_name = measurement_value_column_name
+                    )
                     dataframe = add_ids_to_dataframe(
                         dataframe,
                         **ids
@@ -67,66 +79,33 @@ def csv_files_to_dataframe(
                         object_ids,
                         start_timestamp,
                         end_timestamp,
-                        timestamp_column_name,
-                        object_id_column_name,
-                        anchor_id_column_name
                     )
                     dataframes.append(dataframe)
             else:
                     dataframe = csv_file_to_dataframe(
-                        directory,
-                        filename,
-                        timestamp_column_name)
+                        directory = directory,
+                        filename = filename,
+                        timestamp_column_name = timestamp_column_name,
+                        anchor_id_column_name = anchor_id_column_name,
+                        object_id_column_name = object_id_column_name,
+                        measurement_value_column_name = measurement_value_column_name
+                    )
                     dataframe = filter_dataframe(
                         dataframe,
                         anchor_ids,
                         object_ids,
                         start_timestamp,
                         end_timestamp,
-                        timestamp_column_name,
-                        object_id_column_name,
-                        anchor_id_column_name
                     )
                     dataframes.append(dataframe)
     dataframe_all = pd.concat(dataframes, ignore_index = True)
-    dataframe_all = dataframe_all[[timestamp_column_name, object_id_column_name, anchor_id_column_name, rssi_column_name]]
-    dataframe_all.sort_values(timestamp_column_name, inplace=True)
-    dataframe_all.reset_index(inplace = True, drop = True)
-    return dataframe_all
-
-
-def csv_files_by_anchor_to_dataframe(
-    directory,
-    filenames,
-    anchor_ids,
-    timestamp_column_name = 'timestamp',
-    object_id_column_name = 'object_id',
-    anchor_id_column_name = 'anchor_id',
-    rssi_column_name = 'rssi'
-):
-    num_filenames = len(filenames)
-    num_anchor_ids = len(anchor_ids)
-    if num_filenames != num_anchor_ids:
-        raise ValueError('Filename list has {} elements but anchor ID list has {} elements'.format(
-            num_filenames,
-            num_anchor_ids
-        ))
-    dataframes = []
-    print('Processing data from {} files'.format(num_filenames))
-    for filename_index, filename in enumerate(filenames):
-        anchor_id = anchor_ids[filename_index]
-        dataframe = csv_file_to_dataframe_add_ids(
-            directory = directory,
-            filename = filename,
-            timestamp_column_name = timestamp_column_name,
-            **{anchor_id_column_name: anchor_id})
-        start = dataframe[timestamp_column_name].min()
-        end = dataframe[timestamp_column_name].max()
-        print('{} (anchor ID {}): {} to {} ({} rows)'.format(filename, anchor_id, start, end, len(dataframe.index)))
-        dataframes.append(dataframe)
-    dataframe_all = pd.concat(dataframes, ignore_index = True)
-    dataframe_all = dataframe_all[[timestamp_column_name, object_id_column_name, anchor_id_column_name, rssi_column_name]]
-    dataframe_all.sort_values(timestamp_column_name, inplace=True)
+    dataframe_all = dataframe_all[[
+        DEFAULT_TIMESTAMP_COLUMN_NAME,
+        DEFAULT_OBJECT_ID_COLUMN_NAME,
+        DEFAULT_ANCHOR_ID_COLUMN_NAME,
+        DEFAULT_MEASUREMENT_VALUE_COLUMN_NAME
+    ]]
+    dataframe_all.sort_values(DEFAULT_TIMESTAMP_COLUMN_NAME, inplace=True)
     dataframe_all.reset_index(inplace = True, drop = True)
     return dataframe_all
 
@@ -135,25 +114,22 @@ def filter_dataframe(
     anchor_ids = None,
     object_ids = None,
     start_timestamp = None,
-    end_timestamp = None,
-    timestamp_column_name = 'timestamp',
-    object_id_column_name = 'object_id',
-    anchor_id_column_name = 'anchor_id'
+    end_timestamp = None
 ):
     if anchor_ids is not None:
-        anchor_id_boolean = dataframe[anchor_id_column_name].isin(anchor_ids)
+        anchor_id_boolean = dataframe[DEFAULT_ANCHOR_ID_COLUMN_NAME].isin(anchor_ids)
     else:
         anchor_id_boolean = True
     if object_ids is not None:
-        object_id_boolean = dataframe[object_id_column_name].isin(object_ids)
+        object_id_boolean = dataframe[DEFAULT_OBJECT_ID_COLUMN_NAME].isin(object_ids)
     else:
         object_id_boolean = True
     if start_timestamp is not None:
-        start_timestamp_boolean = (dataframe[timestamp_column_name] >= start_timestamp)
+        start_timestamp_boolean = (dataframe[DEFAULT_TIMESTAMP_COLUMN_NAME] >= start_timestamp)
     else:
         start_timestamp_boolean = True
     if end_timestamp is not None:
-        end_timestamp_boolean = (dataframe[timestamp_column_name] <= end_timestamp)
+        end_timestamp_boolean = (dataframe[DEFAULT_TIMESTAMP_COLUMN_NAME] <= end_timestamp)
     else:
         end_timestamp_boolean = True
     combined_boolean = anchor_id_boolean & object_id_boolean & start_timestamp_boolean & end_timestamp_boolean
@@ -163,16 +139,10 @@ def filter_dataframe(
         dataframe_filtered = dataframe
     return dataframe_filtered
 
-def dataframe_to_arrays(
-    dataframe,
-    timestamp_column_name = 'timestamp',
-    object_id_column_name = 'object_id',
-    anchor_id_column_name = 'anchor_id',
-    rssi_column_name = 'rssi'
-):
-    timestamps = np.sort(dataframe[timestamp_column_name].unique())
-    anchor_ids = np.sort(dataframe[anchor_id_column_name].unique())
-    object_ids = np.sort(dataframe[object_id_column_name].unique())
+def dataframe_to_arrays(dataframe):
+    timestamps = np.sort(dataframe[DEFAULT_TIMESTAMP_COLUMN_NAME].unique())
+    anchor_ids = np.sort(dataframe[DEFAULT_ANCHOR_ID_COLUMN_NAME].unique())
+    object_ids = np.sort(dataframe[DEFAULT_OBJECT_ID_COLUMN_NAME].unique())
     anchor_id_list = anchor_ids.tolist()
     object_id_list = object_ids.tolist()
     anchor_indices = {anchor_id: anchor_index for anchor_index, anchor_id in enumerate(anchor_id_list)}
@@ -184,13 +154,13 @@ def dataframe_to_arrays(
     time_index = 0
     print('Processing {} time steps...'.format(num_timestamps))
     start_time = time.time()
-    for group_name, dataframe_single_timestamp in dataframe.groupby(timestamp_column_name):
+    for group_name, dataframe_single_timestamp in dataframe.groupby(DEFAULT_TIMESTAMP_COLUMN_NAME):
         if time_index % 1000 == 0:
             print('Time step: {}'.format(time_index))
         for row_index in range(len(dataframe_single_timestamp)):
-            object_id = dataframe_single_timestamp.iloc[row_index][object_id_column_name]
-            anchor_id = dataframe_single_timestamp.iloc[row_index][anchor_id_column_name]
-            rssi = dataframe_single_timestamp.iloc[row_index]['rssi']
+            object_id = dataframe_single_timestamp.iloc[row_index][DEFAULT_OBJECT_ID_COLUMN_NAME]
+            anchor_id = dataframe_single_timestamp.iloc[row_index][DEFAULT_ANCHOR_ID_COLUMN_NAME]
+            rssi = dataframe_single_timestamp.iloc[row_index][DEFAULT_MEASUREMENT_VALUE_COLUMN_NAME]
             if object_id in object_ids and anchor_id in anchor_ids:
                 anchor_index = anchor_indices[anchor_id]
                 object_index = object_indices[object_id]
@@ -213,24 +183,12 @@ def dataframe_to_arrays(
     }
     return arrays
 
-def dataframe_to_arrays_by_object(
-    dataframe,
-    timestamp_column_name = 'timestamp',
-    object_id_column_name = 'object_id',
-    anchor_id_column_name = 'anchor_id',
-    rssi_column_name = 'rssi'
-):
+def dataframe_to_arrays_by_object(dataframe):
     arrays_dict = {}
-    for group_name, dataframe_single_object in dataframe.groupby(object_id_column_name):
+    for group_name, dataframe_single_object in dataframe.groupby(DEFAULT_OBJECT_ID_COLUMN_NAME):
         object_id = group_name
         print('Processing data for object {} ({} rows)...'.format(object_id, len(dataframe_single_object)))
-        arrays_dict[object_id] = dataframe_to_arrays(
-            dataframe = dataframe_single_object,
-            timestamp_column_name = timestamp_column_name,
-            object_id_column_name = object_id_column_name,
-            anchor_id_column_name = anchor_id_column_name,
-            rssi_column_name = rssi_column_name
-        )
+        arrays_dict[object_id] = dataframe_to_arrays(dataframe = dataframe_single_object)
     return arrays_dict
 
 def arrays_to_observation_database(arrays):
@@ -260,10 +218,9 @@ def dataframe_to_pkl_csv_files(
 def dataframe_to_pkl_csv_files_by_object(
     dataframe,
     directory,
-    filename_stem,
-    object_id_column_name = 'object_id'
+    filename_stem
 ):
-    for object_id, dataframe_single_object in dataframe.groupby(object_id_column_name):
+    for object_id, dataframe_single_object in dataframe.groupby(DEFAULT_OBJECT_ID_COLUMN_NAME):
         extended_filename_stem = filename_stem + '_' + slugify.slugify(object_id)
         dataframe_to_pkl_csv_files(
             dataframe = dataframe_single_object,
@@ -317,15 +274,15 @@ def get_object_info_from_csv_file(
     filename,
     fixed_object_positions_column_names,
     object_name_column_name = None,
-    object_id_column_name = 'object_id'
+    object_id_column_name = DEFAULT_OBJECT_ID_COLUMN_NAME
 ):
-    object_info_dataframe = pd.DataFrame.from_dict({'object_id': object_ids})
+    object_info_dataframe = pd.DataFrame.from_dict({DEFAULT_OBJECT_ID_COLUMN_NAME: object_ids})
     path = os.path.join(directory, filename)
     file_dataframe = pd.read_csv(path)
     object_info_dataframe = object_info_dataframe.merge(
         right = file_dataframe,
         how = 'left',
-        left_on = 'object_id',
+        left_on = DEFAULT_OBJECT_ID_COLUMN_NAME,
         right_on = object_id_column_name)
     fixed_object_positions = object_info_dataframe[fixed_object_positions_column_names].values
     object_info = {
@@ -342,15 +299,15 @@ def get_anchor_info_from_csv_file(
     filename,
     anchor_positions_column_names,
     anchor_name_column_name = None,
-    anchor_id_column_name = 'anchor_id'
+    anchor_id_column_name = DEFAULT_ANCHOR_ID_COLUMN_NAME
 ):
-    anchor_info_dataframe = pd.DataFrame.from_dict({'anchor_id': anchor_ids})
+    anchor_info_dataframe = pd.DataFrame.from_dict({DEFAULT_ANCHOR_ID_COLUMN_NAME: anchor_ids})
     path = os.path.join(directory, filename)
     file_dataframe = pd.read_csv(path)
     anchor_info_dataframe = anchor_info_dataframe.merge(
         right = file_dataframe,
         how = 'left',
-        left_on = 'anchor_id',
+        left_on = DEFAULT_ANCHOR_ID_COLUMN_NAME,
         right_on = anchor_id_column_name)
     anchor_positions = anchor_info_dataframe[anchor_positions_column_names].values
     anchor_info = {

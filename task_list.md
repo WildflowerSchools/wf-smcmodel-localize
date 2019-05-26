@@ -1,15 +1,17 @@
 # Task list
 
-* Register pandas matplotlib converters
-* Add function to plot timestamp density
-* Add function to plot num_samples
+* Add explicit switch for inplace vs not on dataframe processing
+* Add ability to read IDs from directory names (in addition to filenames)
+* Add print statements to batch file processing
+* Add print statement...Writing/processing data for X objects
+* Replace print statements with logging
+* Add atomic function for splitting dataframe
+* Add atomic function for saving dataframe dict
+* Vectorize function for converting dataframe to arrays
+* Make this module more generic (any function of distance)
+* Make shoe sensor and tray sensor subclasses (or otherwise derivative of this module)
 * Make nicer subplot structure for plotting functions?
 * Add timezone support for plotting functions?
-* Add print statement...Writing/processing data for X objects
-* Change print statements to logging statements
-* Add ability to specify time range when pulling data from files
-* Add function to process files (wrapping up other commands)
-* Automate process from RSSI data file to model to state estimate
 * Add logging
 * Add docstrings
 * Generate documentation
