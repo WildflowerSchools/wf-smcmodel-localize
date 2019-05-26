@@ -7,7 +7,6 @@
 * Replace print statements with logging
 * Add atomic function for splitting dataframe
 * Add atomic function for saving dataframe dict
-* Vectorize function for converting dataframe to arrays
 * Make this module more generic (any function of distance)
 * Make shoe sensor and tray sensor subclasses (or otherwise derivative of this module)
 * Make nicer subplot structure for plotting functions?
