@@ -72,7 +72,6 @@ def filter_dataframe(
     dataframe_filtered = dataframe[combined_boolean]
     return dataframe_filtered
 
-
 def csv_directories_to_dataframe(
     top_directory,
     directory_filter = None,
@@ -112,7 +111,11 @@ def csv_directories_to_dataframe(
                 measurement_value_column_name = measurement_value_column_name
             )
             if dataframe is not None and len(dataframe) > 0:
-                print('Adding {} rows from {}'.format(len(dataframe), path))
+                print('Adding {} rows from directory {} spanning {} to {}'.format(
+                    len(dataframe),
+                    path,
+                    dataframe[DEFAULT_TIMESTAMP_COLUMN_NAME].min().isoformat(),
+                    dataframe[DEFAULT_TIMESTAMP_COLUMN_NAME].max().isoformat()))
                 dataframes.append(dataframe)
     if len(dataframes) == 0:
         return None
@@ -169,7 +172,11 @@ def csv_files_to_dataframe(
                 end_timestamp,
             )
             if len(dataframe) > 0:
-                print('Adding {} rows from {}'.format(len(dataframe), path))
+                print('Adding {} rows from file {} spanning {} to {}'.format(
+                    len(dataframe),
+                    path,
+                    dataframe[DEFAULT_TIMESTAMP_COLUMN_NAME].min().isoformat(),
+                    dataframe[DEFAULT_TIMESTAMP_COLUMN_NAME].max().isoformat()))
                 dataframes.append(dataframe)
     if len(dataframes) == 0:
          return None
@@ -183,6 +190,57 @@ def csv_files_to_dataframe(
     dataframe_all.sort_values(DEFAULT_TIMESTAMP_COLUMN_NAME, inplace=True)
     dataframe_all.reset_index(inplace = True, drop = True)
     return dataframe_all
+
+def csv_directories_to_npz_files_by_object_one_day(
+    input_top_directory,
+    output_directory,
+    output_filename_stem,
+    year,
+    month,
+    day,
+    start_hour = 12,
+    end_hour = 19,
+    tz = 'UTC',
+    directory_filter = None,
+    directory_parser = None,
+    filename_filter = None,
+    filename_parser = None,
+    add_ids = {},
+    timestamp_column_name = DEFAULT_TIMESTAMP_COLUMN_NAME,
+    anchor_id_column_name = DEFAULT_ANCHOR_ID_COLUMN_NAME,
+    object_id_column_name = DEFAULT_OBJECT_ID_COLUMN_NAME,
+    measurement_value_column_name = DEFAULT_MEASUREMENT_VALUE_COLUMN_NAME
+):
+    start_timestamp = pd.Timestamp(year = year, month = month, day = day, hour = start_hour, tz=tz)
+    end_timestamp = pd.Timestamp(year = year, month = month, day = day, hour = end_hour, tz=tz)
+    print('Retrieving observations between {} and {}'.format(
+        start_timestamp.astimezone('UTC').isoformat(),
+        end_timestamp.astimezone('UTC').isoformat(),
+    ))
+    dataframe_all = csv_directories_to_dataframe(
+        top_directory = input_top_directory,
+        directory_filter = directory_filter,
+        directory_parser = directory_parser,
+        filename_filter = filename_filter,
+        filename_parser = filename_parser,
+        add_ids = add_ids,
+        anchor_ids = None,
+        object_ids = None,
+        start_timestamp = start_timestamp,
+        end_timestamp = end_timestamp,
+        timestamp_column_name = timestamp_column_name,
+        anchor_id_column_name = anchor_id_column_name,
+        object_id_column_name = object_id_column_name,
+        measurement_value_column_name = measurement_value_column_name
+    )
+    print('Gathered {} observations'.format(len(dataframe_all)))
+    arrays_by_object = dataframe_to_arrays_by_object(dataframe_all)
+    output_filename_stem_with_date = '{}_{:04}{:02}{:02}'.format(output_filename_stem, year, month, day)
+    arrays_by_object_to_npz_files_by_object(
+        arrays_by_object,
+        directory = output_directory,
+        filename_stem = output_filename_stem_with_date
+    )
 
 def dataframe_to_arrays(dataframe):
     timestamps = np.sort(dataframe[DEFAULT_TIMESTAMP_COLUMN_NAME].unique())
@@ -234,7 +292,11 @@ def dataframe_to_arrays_by_object(dataframe):
     arrays_dict = {}
     for group_name, dataframe_single_object in dataframe.groupby(DEFAULT_OBJECT_ID_COLUMN_NAME):
         object_id = group_name
-        print('Processing data for object {} ({} rows)...'.format(object_id, len(dataframe_single_object)))
+        print('Processing data for object {} ({} rows spanning {} to {})...'.format(
+            object_id,
+            len(dataframe_single_object),
+            dataframe_single_object[DEFAULT_TIMESTAMP_COLUMN_NAME].min().isoformat(),
+            dataframe_single_object[DEFAULT_TIMESTAMP_COLUMN_NAME].max().isoformat()))
         arrays_dict[object_id] = dataframe_to_arrays(dataframe = dataframe_single_object)
     return arrays_dict
 
