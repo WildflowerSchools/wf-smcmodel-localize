@@ -300,8 +300,8 @@ def dataframe_to_arrays_by_object(dataframe):
         arrays_dict[object_id] = dataframe_to_arrays(dataframe = dataframe_single_object)
     return arrays_dict
 
-def arrays_to_observation_database(arrays):
-    observation_structure = smcmodel_localize.model.observation_structure_generator(arrays['num_anchors'], arrays['num_objects'])
+def arrays_to_observation_database(arrays, measurement_value_name):
+    observation_structure = smcmodel_localize.model.observation_structure_generator(arrays['num_anchors'], arrays['num_objects'], measurement_value_name)
     observation_time_series_data = {'rssis': arrays['rssis']}
     observation_database = DatabaseMemory(
         structure = observation_structure,
