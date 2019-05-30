@@ -11,7 +11,7 @@ import itertools
 DEFAULT_TIMESTAMP_COLUMN_NAME = 'timestamp'
 DEFAULT_ANCHOR_ID_COLUMN_NAME = 'anchor_id'
 DEFAULT_OBJECT_ID_COLUMN_NAME = 'object_id'
-DEFAULT_MEASUREMENT_VALUE_COLUMN_NAME = 'rssi'
+DEFAULT_MEASUREMENT_VALUE_COLUMN_NAME = 'value'
 
 def csv_file_to_dataframe(
     directory,
@@ -195,6 +195,7 @@ def csv_directories_to_npz_files_by_object_one_day(
     input_top_directory,
     output_directory,
     output_filename_stem,
+    measurement_value_name,
     year,
     month,
     day,
@@ -234,7 +235,9 @@ def csv_directories_to_npz_files_by_object_one_day(
         measurement_value_column_name = measurement_value_column_name
     )
     print('Gathered {} observations'.format(len(dataframe_all)))
-    arrays_by_object = dataframe_to_arrays_by_object(dataframe_all)
+    arrays_by_object = dataframe_to_arrays_by_object(
+        dataframe = dataframe_all,
+        measurement_value_name = measurement_value_name)
     output_filename_stem_with_date = '{}_{:04}{:02}{:02}'.format(output_filename_stem, year, month, day)
     arrays_by_object_to_npz_files_by_object(
         arrays_by_object,
@@ -242,7 +245,7 @@ def csv_directories_to_npz_files_by_object_one_day(
         filename_stem = output_filename_stem_with_date
     )
 
-def dataframe_to_arrays(dataframe):
+def dataframe_to_arrays(dataframe, measurement_value_name):
     timestamps = np.sort(dataframe[DEFAULT_TIMESTAMP_COLUMN_NAME].unique())
     anchor_ids = np.sort(dataframe[DEFAULT_ANCHOR_ID_COLUMN_NAME].unique())
     object_ids = np.sort(dataframe[DEFAULT_OBJECT_ID_COLUMN_NAME].unique())
@@ -271,7 +274,7 @@ def dataframe_to_arrays(dataframe):
         ]
     )
     measurement_values = dataframe_merged[DEFAULT_MEASUREMENT_VALUE_COLUMN_NAME].values
-    rssis = measurement_values.reshape(
+    measurement_value_array = measurement_values.reshape(
         num_timestamps,
         1,
         num_anchors,
@@ -284,11 +287,11 @@ def dataframe_to_arrays(dataframe):
         'timestamps': timestamps,
         'anchor_ids': anchor_ids,
         'object_ids': object_ids,
-        'rssis': rssis
+        measurement_value_name: measurement_value_array
     }
     return arrays
 
-def dataframe_to_arrays_by_object(dataframe):
+def dataframe_to_arrays_by_object(dataframe, measurement_value_name):
     arrays_dict = {}
     for group_name, dataframe_single_object in dataframe.groupby(DEFAULT_OBJECT_ID_COLUMN_NAME):
         object_id = group_name
@@ -297,12 +300,15 @@ def dataframe_to_arrays_by_object(dataframe):
             len(dataframe_single_object),
             dataframe_single_object[DEFAULT_TIMESTAMP_COLUMN_NAME].min().isoformat(),
             dataframe_single_object[DEFAULT_TIMESTAMP_COLUMN_NAME].max().isoformat()))
-        arrays_dict[object_id] = dataframe_to_arrays(dataframe = dataframe_single_object)
+        arrays_dict[object_id] = dataframe_to_arrays(
+            dataframe = dataframe_single_object,
+            measurement_value_name = measurement_value_name
+        )
     return arrays_dict
 
 def arrays_to_observation_database(arrays, measurement_value_name):
     observation_structure = smcmodel_localize.model.observation_structure_generator(arrays['num_anchors'], arrays['num_objects'], measurement_value_name)
-    observation_time_series_data = {'rssis': arrays['rssis']}
+    observation_time_series_data = {measurement_value_name: arrays[measurement_value_name]}
     observation_database = DatabaseMemory(
         structure = observation_structure,
         num_samples = 1,
@@ -362,7 +368,8 @@ def arrays_by_object_to_npz_files_by_object(
 
 def npz_file_to_arrays(
     directory,
-    filename
+    filename,
+    measurement_value_name
 ):
     path = os.path.join(directory, filename)
     npz_data = np.load(path)
@@ -373,7 +380,7 @@ def npz_file_to_arrays(
         'anchor_ids': npz_data['anchor_ids'].tolist(),
         'object_ids': npz_data['object_ids'].tolist(),
         'timestamps': datetime_conversion.to_posix_timestamps(npz_data['timestamps']),
-        'rssis': np.asarray(npz_data['rssis'])
+        measurement_value_name: np.asarray(npz_data[measurement_value_name])
     }
     return data
 
