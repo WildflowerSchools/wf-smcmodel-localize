@@ -41,89 +41,28 @@ def localization_model(
     anchor_positions = np.asarray(anchor_positions)
     if anchor_positions.shape != (num_anchors, num_dimensions):
         raise ValueError('anchor_positions argument must be of shape (num_anchors, num_moving_object_dimensions + num_fixed_object_dimensions)')
-    parameter_structure = {
-        'num_objects': {
-            'shape': [],
-            'type': 'int32'
-        },
-        'num_anchors': {
-            'shape': [],
-            'type': 'int32'
-        },
-        'num_moving_object_dimensions': {
-            'shape': [],
-            'type': 'int32'
-        },
-        'num_fixed_object_dimensions': {
-            'shape': [],
-            'type': 'int32'
-        },
-        'fixed_object_positions': {
-            'shape': [num_objects, num_fixed_object_dimensions],
-            'type': 'float32'
-        },
-        'room_corners': {
-            'shape': [2, num_moving_object_dimensions],
-            'type': 'float32'
-        },
-        'anchor_positions': {
-            'shape': [num_anchors, num_dimensions],
-            'type': 'float32'
-        },
-        'reference_time_interval': {
-            'shape': [],
-            'type': 'float32'
-        },
-        'reference_drift': {
-            'shape': [],
-            'type': 'float32'
-        },
-        'reference_distance': {
-            'shape': [],
-            'type': 'float32'
-        },
-        'reference_mean_rssi': {
-            'shape': [],
-            'type': 'float32'
-        },
-        'rssi_std_dev': {
-            'shape': [],
-            'type': 'float32'
-        },
-        'ping_success_rate': {
-            'shape': [],
-            'type': 'float32'
-        }
-    }
 
-    state_structure = {
-        'moving_object_positions': {
-            'shape': [num_objects, num_moving_object_dimensions],
-            'type': 'float32'
-        }
-    }
+    parameter_structure = parameter_structure_generator(
+        num_anchors,
+        num_objects,
+        num_moving_object_dimensions,
+        num_fixed_object_dimensions
+    )
 
-    observation_structure = {
-        'rssis': {
-            'shape': [num_anchors, num_objects],
-            'type': 'float32'
-        }
-    }
+    state_structure = state_structure_generator(
+        num_objects,
+        num_moving_object_dimensions
+    )
 
-    state_summary_structure = {
-        'moving_object_positions_mean': {
-            'shape': [num_objects, num_moving_object_dimensions],
-            'type': 'float32'
-        },
-        'moving_object_positions_sd': {
-            'shape': [num_objects, num_moving_object_dimensions],
-            'type': 'float32'
-        },
-        'num_resample_indices': {
-            'shape': [],
-            'type': 'int32'
-        }
-    }
+    observation_structure = observation_structure_generator(
+        num_anchors,
+        num_objects
+    )
+
+    state_summary_structure = state_summary_structure_generator(
+        num_objects,
+        num_moving_object_dimensions
+    )
 
     def parameter_model_sample():
         parameters = {
@@ -312,3 +251,96 @@ def localization_model(
         state_summary
     )
     return model
+
+def parameter_structure_generator(num_anchors, num_objects, num_moving_object_dimensions, num_fixed_object_dimensions):
+    num_dimensions = num_moving_object_dimensions + num_fixed_object_dimensions
+    parameter_structure = {
+        'num_objects': {
+            'shape': [],
+            'type': 'int32'
+        },
+        'num_anchors': {
+            'shape': [],
+            'type': 'int32'
+        },
+        'num_moving_object_dimensions': {
+            'shape': [],
+            'type': 'int32'
+        },
+        'num_fixed_object_dimensions': {
+            'shape': [],
+            'type': 'int32'
+        },
+        'fixed_object_positions': {
+            'shape': [num_objects, num_fixed_object_dimensions],
+            'type': 'float32'
+        },
+        'room_corners': {
+            'shape': [2, num_moving_object_dimensions],
+            'type': 'float32'
+        },
+        'anchor_positions': {
+            'shape': [num_anchors, num_dimensions],
+            'type': 'float32'
+        },
+        'reference_time_interval': {
+            'shape': [],
+            'type': 'float32'
+        },
+        'reference_drift': {
+            'shape': [],
+            'type': 'float32'
+        },
+        'reference_distance': {
+            'shape': [],
+            'type': 'float32'
+        },
+        'reference_mean_rssi': {
+            'shape': [],
+            'type': 'float32'
+        },
+        'rssi_std_dev': {
+            'shape': [],
+            'type': 'float32'
+        },
+        'ping_success_rate': {
+            'shape': [],
+            'type': 'float32'
+        }
+    }
+    return parameter_structure
+
+def state_structure_generator(num_objects, num_moving_object_dimensions):
+    state_structure = {
+        'moving_object_positions': {
+            'shape': [num_objects, num_moving_object_dimensions],
+            'type': 'float32'
+        }
+    }
+    return state_structure
+
+def observation_structure_generator(num_anchors, num_objects):
+    observation_structure = {
+        'rssis': {
+            'shape': [num_anchors, num_objects],
+            'type': 'float32'
+        }
+    }
+    return observation_structure
+
+def state_summary_structure_generator(num_objects, num_moving_object_dimensions):
+    state_summary_structure = {
+        'moving_object_positions_mean': {
+            'shape': [num_objects, num_moving_object_dimensions],
+            'type': 'float32'
+        },
+        'moving_object_positions_sd': {
+            'shape': [num_objects, num_moving_object_dimensions],
+            'type': 'float32'
+        },
+        'num_resample_indices': {
+            'shape': [],
+            'type': 'int32'
+        }
+    }
+    return state_summary_structure
