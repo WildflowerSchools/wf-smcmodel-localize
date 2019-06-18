@@ -57,7 +57,6 @@ def plot_positions_topdown(
         end_timestamp = end_timestamp)
     num_objects = state_summary_time_series['moving_object_positions_mean'].shape[2]
     state_summary_timestamps_np = datetime_conversion.to_numpy_datetimes(state_summary_timestamps)
-    date_formatter = mdates.DateFormatter('%H:%M')
     for object_index in range(num_objects):
         if object_names is not None:
             title_object_name = object_names[object_index]
