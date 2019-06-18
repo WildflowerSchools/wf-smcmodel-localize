@@ -50,7 +50,9 @@ def plot_positions_topdown(
     object_names = None,
     position_axes_names = ['$x$', '$y$'],
     timezone_name = 'UTC',
-    output_path = None):
+    output_path = None,
+    x_size_inches = 7.5,
+    y_size_inches = 10):
     state_summary_timestamps, state_summary_time_series = state_summary_database.fetch_data(
         start_timestamp = start_timestamp,
         end_timestamp = end_timestamp)
@@ -76,6 +78,7 @@ def plot_positions_topdown(
         plt.ylabel('{} position'.format(position_axes_names[1]))
         plt.title('Sensor: {}'.format(title_object_name))
         ax.set_aspect('equal')
+        fig.set_size_inches(x_size_inches, y_size_inches)
         if output_path is not None:
             plt.savefig(output_path, bbox_extra_artists=(lgd,), bbox_inches='tight')
         plt.show()
