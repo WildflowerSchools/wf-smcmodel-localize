@@ -2,6 +2,7 @@ import datetime_conversion
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from pandas.plotting import register_matplotlib_converters
+import os
 
 register_matplotlib_converters()
 
@@ -9,37 +10,63 @@ def plot_positions(
     state_summary_database,
     start_timestamp = None,
     end_timestamp = None,
-    object_ids = None,
-    object_names = None,
+    title_object_names = None,
+    title_addendum = None,
     position_axes_names = ['$x$', '$y$'],
-    timezone_name = 'UTC'):
+    timezone_name = 'UTC',
+    x_size_inches = 7.5,
+    y_size_inches = 10,
+    save = True,
+    output_directory = '.',
+    output_filename_stem = None,
+    output_filename_object_ids = None,
+    output_filename_extension = 'png',
+    show = False
+):
     state_summary_timestamps, state_summary_time_series = state_summary_database.fetch_data(
         start_timestamp = start_timestamp,
         end_timestamp = end_timestamp)
     num_objects = state_summary_time_series['moving_object_positions_mean'].shape[2]
+    num_position_axes = state_summary_time_series['moving_object_positions_mean'].shape[3]
     state_summary_timestamps_np = datetime_conversion.to_numpy_datetimes(state_summary_timestamps)
     date_formatter = mdates.DateFormatter('%H:%M')
     for object_index in range(num_objects):
-        if object_names is not None:
-            title_object_name = object_names[object_index]
-        elif object_ids is not None:
-            title_object_name = object_ids[object_index]
+        if title_object_names is not None:
+            title_string = title_object_names[object_index]
         else:
-            title_object_name = 'Object {}'.format(object_index)
-        for position_axis_index, position_axis_name in enumerate(position_axes_names):
-            fig, ax = plt.subplots()
-            plt.plot(
+            title_string = 'Object {}'.format(object_index)
+        if title_addendum is not None:
+            title_string += ' ({})'.format(title_addendum)
+        fig, axes = plt.subplots(nrows = num_position_axes, ncols = 1, sharex = True)
+        for position_axis_index in range(num_position_axes):
+            axes[position_axis_index].plot(
                 state_summary_timestamps_np[:],
                 state_summary_time_series['moving_object_positions_mean'][:, 0, object_index, position_axis_index],
                 color='blue',
                 label = 'Mean estimate'
             )
-            plt.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
-            plt.xlabel('Time ({})'.format(timezone_name))
-            plt.ylabel('{} position'.format(position_axis_name))
-            plt.title('Sensor: {}'.format(title_object_name))
-            ax.xaxis.set_major_formatter(date_formatter)
-            fig.autofmt_xdate()
+            lgd = axes[position_axis_index].legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
+            axes[position_axis_index].set_xlabel('Time ({})'.format(timezone_name))
+            axes[position_axis_index].set_ylabel('{} position'.format(position_axes_names[position_axis_index]))
+            axes[position_axis_index].xaxis.set_major_formatter(date_formatter)
+        fig_suptitle = fig.suptitle(title_string, va = 'bottom', fontsize = 'x-large')
+        fig.autofmt_xdate()
+        fig.set_size_inches(x_size_inches, y_size_inches)
+        if save:
+            if output_filename_object_ids is not None:
+                output_filename_object_id = output_filename_object_ids[object_index]
+            else:
+                output_filename_object_id = 'obj{:02}'.format(object_index)
+            output_path = os.path.join(
+                output_directory,
+                'positions_{}_{}.{}'.format(
+                    output_filename_stem,
+                    output_filename_object_id,
+                    output_filename_extension
+                )
+            )
+            plt.savefig(output_path, bbox_extra_artists=(lgd, fig_suptitle), bbox_inches='tight')
+        if show:
             plt.show()
 
 def plot_positions_topdown(
