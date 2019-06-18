@@ -71,12 +71,12 @@ def plot_positions_topdown(
             color='blue',
             label = 'Mean estimate'
         )
-        # plt.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
+        lgd = plt.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
         plt.xlabel('{} position'.format(position_axes_names[0]))
         plt.ylabel('{} position'.format(position_axes_names[1]))
         plt.title('Sensor: {}'.format(title_object_name))
         if output_path is not None:
-            plt.savefig(output_path)
+            plt.savefig(output_path, bbox_extra_artists=(lgd,), bbox_inches='tight')
         plt.show()
 
 def plot_state_summary_timestamp_density(
