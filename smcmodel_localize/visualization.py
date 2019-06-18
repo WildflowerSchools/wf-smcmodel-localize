@@ -42,6 +42,40 @@ def plot_positions(
             fig.autofmt_xdate()
             plt.show()
 
+def plot_positions_topdown(
+    state_summary_database,
+    start_timestamp = None,
+    end_timestamp = None,
+    object_ids = None,
+    object_names = None,
+    position_axes_names = ['$x$', '$y$'],
+    timezone_name = 'UTC'):
+    state_summary_timestamps, state_summary_time_series = state_summary_database.fetch_data(
+        start_timestamp = start_timestamp,
+        end_timestamp = end_timestamp)
+    num_objects = state_summary_time_series['moving_object_positions_mean'].shape[2]
+    state_summary_timestamps_np = datetime_conversion.to_numpy_datetimes(state_summary_timestamps)
+    date_formatter = mdates.DateFormatter('%H:%M')
+    for object_index in range(num_objects):
+        if object_names is not None:
+            title_object_name = object_names[object_index]
+        elif object_ids is not None:
+            title_object_name = object_ids[object_index]
+        else:
+            title_object_name = 'Object {}'.format(object_index)
+        fig, ax = plt.subplots()
+        plt.plot(
+            state_summary_time_series['moving_object_positions_mean'][:, 0, object_index, 0],
+            state_summary_time_series['moving_object_positions_mean'][:, 0, object_index, 1],
+            color='blue',
+            label = 'Mean estimate'
+        )
+        plt.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
+        plt.xlabel('{} position'.format(position_axes_names[0]))
+        plt.ylabel('{} position'.format(position_axes_names[1]))
+        plt.title('Sensor: {}'.format(title_object_name))
+        plt.show()
+
 def plot_state_summary_timestamp_density(
     state_summary_database,
     start_timestamp = None,
