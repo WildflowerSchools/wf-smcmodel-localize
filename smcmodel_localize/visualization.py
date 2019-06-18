@@ -75,6 +75,7 @@ def plot_positions_topdown(
         plt.xlabel('{} position'.format(position_axes_names[0]))
         plt.ylabel('{} position'.format(position_axes_names[1]))
         plt.title('Sensor: {}'.format(title_object_name))
+        ax.set_aspect('equal')
         if output_path is not None:
             plt.savefig(output_path, bbox_extra_artists=(lgd,), bbox_inches='tight')
         plt.show()
