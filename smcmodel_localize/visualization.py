@@ -49,7 +49,7 @@ def plot_positions(
             axes[position_axis_index].set_xlabel('Time ({})'.format(timezone_name))
             axes[position_axis_index].set_ylabel('{} position'.format(position_axes_names[position_axis_index]))
             axes[position_axis_index].xaxis.set_major_formatter(date_formatter)
-        fig_suptitle = fig.suptitle(title_string, va = 'bottom', fontsize = 'x-large')
+        fig_suptitle = fig.suptitle(title_string, fontsize = 'x-large')
         fig.autofmt_xdate()
         fig.set_size_inches(x_size_inches, y_size_inches)
         if save:
@@ -73,23 +73,28 @@ def plot_positions_topdown(
     state_summary_database,
     start_timestamp = None,
     end_timestamp = None,
-    object_names = None,
-    position_axes_names = ['$x$', '$y$'],
+    title_object_names = None,
     title_addendum = None,
-    output_path = None,
+    position_axes_names = ['$x$', '$y$'],
     x_size_inches = 7.5,
-    y_size_inches = 10):
+    y_size_inches = 10,
+    save = True,
+    output_directory = '.',
+    output_filename_stem = None,
+    output_filename_object_ids = None,
+    output_filename_extension = 'png',
+    show = False
+    ):
     state_summary_timestamps, state_summary_time_series = state_summary_database.fetch_data(
         start_timestamp = start_timestamp,
         end_timestamp = end_timestamp)
     num_objects = state_summary_time_series['moving_object_positions_mean'].shape[2]
     state_summary_timestamps_np = datetime_conversion.to_numpy_datetimes(state_summary_timestamps)
     for object_index in range(num_objects):
-        if object_names is not None:
-            title_object_name = object_names[object_index]
+        if title_object_names is not None:
+            title_string = title_object_names[object_index]
         else:
-            title_object_name = 'Object {}'.format(object_index)
-        title_string = title_object_name
+            title_string = 'Object {}'.format(object_index)
         if title_addendum is not None:
             title_string += ' ({})'.format(title_addendum)
         fig, ax = plt.subplots()
@@ -103,11 +108,24 @@ def plot_positions_topdown(
         ax.set_xlabel('{} position'.format(position_axes_names[0]))
         ax.set_ylabel('{} position'.format(position_axes_names[1]))
         ax.set_aspect('equal')
-        ax.set_title(title_string)
+        fig_suptitle = fig.suptitle(title_string, fontsize = 'x-large')
         fig.set_size_inches(x_size_inches, y_size_inches)
-        if output_path is not None:
-            plt.savefig(output_path, bbox_extra_artists=(lgd,), bbox_inches='tight')
-        plt.show()
+        if save:
+            if output_filename_object_ids is not None:
+                output_filename_object_id = output_filename_object_ids[object_index]
+            else:
+                output_filename_object_id = 'obj{:02}'.format(object_index)
+            output_path = os.path.join(
+                output_directory,
+                'positions_topdown_{}_{}.{}'.format(
+                    output_filename_stem,
+                    output_filename_object_id,
+                    output_filename_extension
+                )
+            )
+            plt.savefig(output_path, bbox_extra_artists=(lgd, fig_suptitle), bbox_inches='tight')
+        if show:
+            plt.show()
 
 def plot_state_summary_timestamp_density(
     state_summary_database,
