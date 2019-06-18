@@ -49,7 +49,6 @@ def plot_positions_topdown(
     object_ids = None,
     object_names = None,
     position_axes_names = ['$x$', '$y$'],
-    timezone_name = 'UTC',
     output_path = None,
     x_size_inches = 7.5,
     y_size_inches = 10):
