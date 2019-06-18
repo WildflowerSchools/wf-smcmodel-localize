@@ -132,23 +132,44 @@ def plot_state_summary_timestamp_density(
     start_timestamp = None,
     end_timestamp = None,
     bins = 100,
-    timezone_name = 'UTC'):
+    timezone_name = 'UTC',
+    fig_title = 'Timestamp density',
+    x_size_inches = 7.5,
+    y_size_inches = 6,
+    save = True,
+    output_directory = '.',
+    output_filename_stem = None,
+    output_filename_extension = 'png',
+    show = False
+    ):
     state_summary_timestamps, state_summary_time_series = state_summary_database.fetch_data(
         start_timestamp = start_timestamp,
         end_timestamp = end_timestamp)
     state_summary_timestamps_np = datetime_conversion.to_numpy_datetimes(state_summary_timestamps)
     date_formatter = mdates.DateFormatter('%H:%M')
     fig, ax = plt.subplots()
-    plt.hist(
+    ax.hist(
         state_summary_timestamps_np,
         bins = bins,
         color = 'blue'
     )
-    plt.xlabel('Time ({})'.format(timezone_name))
-    plt.ylabel('Number of observations')
+    ax.set_xlabel('Time ({})'.format(timezone_name))
+    ax.set_ylabel('Number of observations')
     ax.xaxis.set_major_formatter(date_formatter)
     fig.autofmt_xdate()
-    plt.show()
+    fig_suptitle = fig.suptitle(fig_title, fontsize = 'x-large')
+    fig.set_size_inches(x_size_inches, y_size_inches)
+    if save:
+        output_path = os.path.join(
+            output_directory,
+            'timestamp_density_{}.{}'.format(
+                output_filename_stem,
+                output_filename_extension
+            )
+        )
+        plt.savefig(output_path, bbox_extra_artists=(fig_suptitle,), bbox_inches='tight')
+    if show:
+        plt.show()
 
 def plot_num_samples(
     state_summary_database,
