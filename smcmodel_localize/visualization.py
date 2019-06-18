@@ -49,7 +49,8 @@ def plot_positions_topdown(
     object_ids = None,
     object_names = None,
     position_axes_names = ['$x$', '$y$'],
-    timezone_name = 'UTC'):
+    timezone_name = 'UTC',
+    output_path = None):
     state_summary_timestamps, state_summary_time_series = state_summary_database.fetch_data(
         start_timestamp = start_timestamp,
         end_timestamp = end_timestamp)
@@ -70,10 +71,12 @@ def plot_positions_topdown(
             color='blue',
             label = 'Mean estimate'
         )
-        plt.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
+        # plt.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
         plt.xlabel('{} position'.format(position_axes_names[0]))
         plt.ylabel('{} position'.format(position_axes_names[1]))
         plt.title('Sensor: {}'.format(title_object_name))
+        if output_path is not None:
+            plt.savefig(output_path)
         plt.show()
 
 def plot_state_summary_timestamp_density(
