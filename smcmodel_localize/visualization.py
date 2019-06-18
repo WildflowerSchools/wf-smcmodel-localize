@@ -66,17 +66,17 @@ def plot_positions_topdown(
         else:
             title_object_name = 'Object {}'.format(object_index)
         fig, ax = plt.subplots()
-        plt.plot(
+        ax.plot(
             state_summary_time_series['moving_object_positions_mean'][:, 0, object_index, 0],
             state_summary_time_series['moving_object_positions_mean'][:, 0, object_index, 1],
             color='blue',
             label = 'Mean estimate'
         )
-        lgd = plt.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
-        plt.xlabel('{} position'.format(position_axes_names[0]))
-        plt.ylabel('{} position'.format(position_axes_names[1]))
-        plt.title('Sensor: {}'.format(title_object_name))
+        lgd = ax.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
+        ax.set_xlabel('{} position'.format(position_axes_names[0]))
+        ax.set_ylabel('{} position'.format(position_axes_names[1]))
         ax.set_aspect('equal')
+        ax.set_title('Sensor: {}'.format(title_object_name))
         fig.set_size_inches(x_size_inches, y_size_inches)
         if output_path is not None:
             plt.savefig(output_path, bbox_extra_artists=(lgd,), bbox_inches='tight')
