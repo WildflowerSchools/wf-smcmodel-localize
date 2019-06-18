@@ -46,9 +46,9 @@ def plot_positions_topdown(
     state_summary_database,
     start_timestamp = None,
     end_timestamp = None,
-    object_ids = None,
     object_names = None,
     position_axes_names = ['$x$', '$y$'],
+    title_addendum = None,
     output_path = None,
     x_size_inches = 7.5,
     y_size_inches = 10):
@@ -60,10 +60,11 @@ def plot_positions_topdown(
     for object_index in range(num_objects):
         if object_names is not None:
             title_object_name = object_names[object_index]
-        elif object_ids is not None:
-            title_object_name = object_ids[object_index]
         else:
             title_object_name = 'Object {}'.format(object_index)
+        title_string = title_object_name
+        if title_addendum is not None:
+            title_string += ' ({})'.format(title_addendum)
         fig, ax = plt.subplots()
         ax.plot(
             state_summary_time_series['moving_object_positions_mean'][:, 0, object_index, 0],
@@ -75,7 +76,7 @@ def plot_positions_topdown(
         ax.set_xlabel('{} position'.format(position_axes_names[0]))
         ax.set_ylabel('{} position'.format(position_axes_names[1]))
         ax.set_aspect('equal')
-        ax.set_title('Sensor: {}'.format(title_object_name))
+        ax.set_title(title_string)
         fig.set_size_inches(x_size_inches, y_size_inches)
         if output_path is not None:
             plt.savefig(output_path, bbox_extra_artists=(lgd,), bbox_inches='tight')
