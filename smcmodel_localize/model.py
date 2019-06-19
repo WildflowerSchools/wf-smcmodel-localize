@@ -18,6 +18,7 @@ def localization_model(
     ],
     reference_time_interval = 1.0,
     reference_drift = 0.1,
+    minimum_drift = 0.0001,
     measurement_value_mean_function = lambda x: x,
     measurement_value_sd_function = lambda x: reference_drift,
     measurement_value_name = 'measurement_values',
@@ -75,6 +76,7 @@ def localization_model(
             'anchor_positions': tf.constant(anchor_positions, dtype = tf.float32),
             'reference_time_interval': tf.constant(reference_time_interval, dtype=tf.float32),
             'reference_drift': tf.constant(reference_drift, dtype=tf.float32),
+            'minimum_drift': tf.constant(minimum_drift, dtype=tf.float32),
             'ping_success_rate': tf.constant(ping_success_rate, dtype=tf.float32)
         }
         return parameters
@@ -96,9 +98,11 @@ def localization_model(
         current_moving_object_positions = current_state['moving_object_positions']
         reference_time_interval = parameters['reference_time_interval']
         reference_drift = parameters['reference_drift']
+        minimum_drift = parameters['minimum_drift']
         room_corners = parameters['room_corners']
         time_difference = tf.cast(next_time - current_time, dtype=tf.float32)
-        drift = reference_drift*tf.sqrt(time_difference/reference_time_interval)
+        calculated_drift = reference_drift*tf.sqrt(time_difference/reference_time_interval)
+        drift = tf.maximum(calculated_drift, minimum_drift)
         drift_distribution = tfp.distributions.TruncatedNormal(
             loc = current_moving_object_positions,
             scale = drift,
