@@ -81,7 +81,9 @@ def wide_csv_file_to_dataframe(
     filename,
     timestamp_column_name,
     anchor_data_column_names,
-    object_id_column_name
+    object_id_column_name,
+    min_data_value = None,
+    max_data_value = None,
 ):
     num_anchor_data_columns = len(anchor_data_column_names)
     new_anchor_data_column_names = ['{}{:02}'.format(DEFAULT_ANCHOR_DATA_COLUMN_NAME_PREFIX, i) for i in range(num_anchor_data_columns)]
@@ -98,12 +100,28 @@ def wide_csv_file_to_dataframe(
         axis = 'columns',
         inplace = True
     )
+    dataframe = dataframe[[DEFAULT_TIMESTAMP_COLUMN_NAME,DEFAULT_OBJECT_ID_COLUMN_NAME] + new_anchor_data_column_names]
     dataframe.dropna(
         axis = 0,
         subset = [DEFAULT_TIMESTAMP_COLUMN_NAME, DEFAULT_OBJECT_ID_COLUMN_NAME],
         inplace = True
     )
-    dataframe = dataframe[[DEFAULT_TIMESTAMP_COLUMN_NAME,DEFAULT_OBJECT_ID_COLUMN_NAME] + new_anchor_data_column_names]
+    if min_data_value is not None:
+        dataframe[new_anchor_data_column_names] = dataframe[new_anchor_data_column_names].mask(
+            dataframe[new_anchor_data_column_names] <= min_data_value,
+            np.nan
+        )
+    if max_data_value is not None:
+        dataframe[new_anchor_data_column_names] = dataframe[new_anchor_data_column_names].mask(
+            dataframe[new_anchor_data_column_names] >= max_data_value,
+            np.nan
+        )
+    dataframe.dropna(
+        axis = 0,
+        how = 'all',
+        subset = new_anchor_data_column_names,
+        inplace = True
+    )
     return dataframe
 
 def add_ids_to_dataframe(
@@ -237,7 +255,9 @@ def wide_csv_directories_to_dataframe(
     add_ids = {},
     object_ids = None,
     start_timestamp = None,
-    end_timestamp = None
+    end_timestamp = None,
+    min_data_value = None,
+    max_data_value = None
 ):
     dataframes = []
     directory_entries = os.listdir(top_directory)
@@ -257,7 +277,9 @@ def wide_csv_directories_to_dataframe(
                 add_ids = add_ids,
                 object_ids = object_ids,
                 start_timestamp = start_timestamp,
-                end_timestamp = end_timestamp
+                end_timestamp = end_timestamp,
+                min_data_value = min_data_value,
+                max_data_value = max_data_value
             )
             if dataframe is not None and len(dataframe) > 0:
                 print('Adding {} rows from directory {} spanning {} to {}'.format(
@@ -344,7 +366,9 @@ def wide_csv_files_to_dataframe(
     add_ids = {},
     object_ids = None,
     start_timestamp = None,
-    end_timestamp = None
+    end_timestamp = None,
+    min_data_value = None,
+    max_data_value = None
 ):
     dataframes = []
     directory_entries = os.listdir(directory)
@@ -359,7 +383,9 @@ def wide_csv_files_to_dataframe(
                 filename = directory_entry,
                 timestamp_column_name = timestamp_column_name,
                 anchor_data_column_names = anchor_data_column_names,
-                object_id_column_name = object_id_column_name
+                object_id_column_name = object_id_column_name,
+                min_data_value = min_data_value,
+                max_data_value = max_data_value
             )
             dataframe = add_ids_to_dataframe(
                 dataframe,
