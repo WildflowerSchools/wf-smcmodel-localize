@@ -98,6 +98,11 @@ def wide_csv_file_to_dataframe(
         axis = 'columns',
         inplace = True
     )
+    dataframe.dropna(
+        axis = 0,
+        subset = [DEFAULT_TIMESTAMP_COLUMN_NAME, DEFAULT_OBJECT_ID_COLUMN_NAME],
+        inplace = True
+    )
     dataframe = dataframe[[DEFAULT_TIMESTAMP_COLUMN_NAME,DEFAULT_OBJECT_ID_COLUMN_NAME] + new_anchor_data_column_names]
     return dataframe
 
@@ -475,6 +480,49 @@ def dataframe_to_arrays(dataframe, measurement_value_name):
         'num_objects': num_objects,
         'timestamps': timestamps,
         'anchor_ids': anchor_ids,
+        'object_ids': object_ids,
+        measurement_value_name: measurement_value_array
+    }
+    return arrays
+
+def wide_dataframe_to_arrays(dataframe, num_anchors, measurement_value_name):
+    timestamps = np.sort(dataframe[DEFAULT_TIMESTAMP_COLUMN_NAME].unique())
+    object_ids = np.sort(dataframe[DEFAULT_OBJECT_ID_COLUMN_NAME].unique())
+    num_timestamps = len(timestamps)
+    num_objects = len(object_ids)
+    dataframe_all = pd.DataFrame(
+        list(itertools.product(
+            timestamps,
+            object_ids
+        )),
+        columns = [
+            DEFAULT_TIMESTAMP_COLUMN_NAME,
+            DEFAULT_OBJECT_ID_COLUMN_NAME
+        ]
+    )
+    dataframe_merged = dataframe_all.merge(
+        right = dataframe,
+        how = 'left',
+        on = [
+            DEFAULT_TIMESTAMP_COLUMN_NAME,
+            DEFAULT_OBJECT_ID_COLUMN_NAME
+        ]
+    )
+    anchor_data_column_names = ['{}{:02}'.format(DEFAULT_ANCHOR_DATA_COLUMN_NAME_PREFIX, i) for i in range(num_anchors)]
+    measurement_values = dataframe_merged[anchor_data_column_names].values
+    measurement_value_array = measurement_values.reshape(
+        num_timestamps,
+        1,
+        num_objects,
+        num_anchors
+    )
+    measurement_value_array = np.swapaxes(measurement_value_array, 2, 3)
+    arrays = {
+        'num_timestamps': num_timestamps,
+        'num_anchors': num_anchors,
+        'num_objects': num_objects,
+        'timestamps': timestamps,
+        'anchor_ids': anchor_data_column_names,
         'object_ids': object_ids,
         measurement_value_name: measurement_value_array
     }
