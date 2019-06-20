@@ -13,6 +13,46 @@ DEFAULT_ANCHOR_ID_COLUMN_NAME = 'anchor_id'
 DEFAULT_OBJECT_ID_COLUMN_NAME = 'object_id'
 DEFAULT_MEASUREMENT_VALUE_COLUMN_NAME = 'value'
 
+def wide_csv_file_to_long_csv_file(
+    directory,
+    filename,
+    id_column_names,
+    data_column_names,
+    new_id_column_name,
+    new_data_column_name,
+    new_id_values = None,
+    output_directory = '.',
+    output_filename_prefix = 'long_'
+):
+    path = os.path.join(directory, filename)
+    dataframe = pd.read_csv(path, dtype=str)
+    if new_id_values is not None:
+        if len(new_id_values) != len(data_column_names):
+            raise ValueError('Variable value list must be same length as value column name list')
+        mapping_dict = {data_column_names[i]: new_id_values[i] for i in range(len(new_id_values))}
+        dataframe.rename(
+            mapper = mapping_dict,
+            axis = 'columns',
+            inplace= True
+        )
+        data_column_names = new_id_values
+    dataframe_long = pd.melt(
+        dataframe,
+        id_vars = id_column_names,
+        value_vars = data_column_names,
+        var_name = new_id_column_name,
+        value_name = new_data_column_name
+    )
+    dataframe_long.dropna(
+        axis = 0,
+        subset = [new_data_column_name],
+        inplace = True
+    )
+    output_filename = output_filename_prefix + filename
+    output_path = os.path.join(output_directory, output_filename)
+    dataframe_long.to_csv(output_path, index = False)
+
+
 def csv_file_to_dataframe(
     directory,
     filename,
