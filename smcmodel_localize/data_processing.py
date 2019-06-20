@@ -10,6 +10,7 @@ import itertools
 
 DEFAULT_TIMESTAMP_COLUMN_NAME = 'timestamp'
 DEFAULT_ANCHOR_ID_COLUMN_NAME = 'anchor_id'
+DEFAULT_ANCHOR_DATA_COLUMN_NAME_PREFIX = 'anchor_'
 DEFAULT_OBJECT_ID_COLUMN_NAME = 'object_id'
 DEFAULT_MEASUREMENT_VALUE_COLUMN_NAME = 'value'
 
@@ -75,6 +76,31 @@ def csv_file_to_dataframe(
     )
     return dataframe
 
+def wide_csv_file_to_dataframe(
+    directory,
+    filename,
+    timestamp_column_name,
+    anchor_data_column_names,
+    object_id_column_name
+):
+    num_anchor_data_columns = len(anchor_data_column_names)
+    new_anchor_data_column_names = ['{}{:02}'.format(DEFAULT_ANCHOR_DATA_COLUMN_NAME_PREFIX, i) for i in range(num_anchor_data_columns)]
+    column_name_mapper = {
+        timestamp_column_name: DEFAULT_TIMESTAMP_COLUMN_NAME,
+        object_id_column_name: DEFAULT_OBJECT_ID_COLUMN_NAME,
+    }
+    anchor_data_column_name_mapper = {anchor_data_column_names[i]: new_anchor_data_column_names[i] for i in range(num_anchor_data_columns)}
+    column_name_mapper.update(anchor_data_column_name_mapper)
+    path = os.path.join(directory, filename)
+    dataframe = pd.read_csv(path, parse_dates = [timestamp_column_name])
+    dataframe.rename(
+        mapper = column_name_mapper,
+        axis = 'columns',
+        inplace = True
+    )
+    dataframe = dataframe[[DEFAULT_TIMESTAMP_COLUMN_NAME,DEFAULT_OBJECT_ID_COLUMN_NAME] + new_anchor_data_column_names]
+    return dataframe
+
 def add_ids_to_dataframe(
     dataframe,
     **kwargs
@@ -109,6 +135,30 @@ def filter_dataframe(
     else:
         end_timestamp_boolean = True
     combined_boolean = anchor_id_boolean & object_id_boolean & start_timestamp_boolean & end_timestamp_boolean
+    dataframe_filtered = dataframe[combined_boolean]
+    return dataframe_filtered
+
+def wide_filter_dataframe(
+    dataframe,
+    object_ids = None,
+    start_timestamp = None,
+    end_timestamp = None
+):
+    if object_ids is None and start_timestamp is None and end_timestamp is None:
+        return dataframe
+    if object_ids is not None:
+        object_id_boolean = dataframe[DEFAULT_OBJECT_ID_COLUMN_NAME].isin(object_ids)
+    else:
+        object_id_boolean = True
+    if start_timestamp is not None:
+        start_timestamp_boolean = (dataframe[DEFAULT_TIMESTAMP_COLUMN_NAME] >= start_timestamp)
+    else:
+        start_timestamp_boolean = True
+    if end_timestamp is not None:
+        end_timestamp_boolean = (dataframe[DEFAULT_TIMESTAMP_COLUMN_NAME] <= end_timestamp)
+    else:
+        end_timestamp_boolean = True
+    combined_boolean = object_id_boolean & start_timestamp_boolean & end_timestamp_boolean
     dataframe_filtered = dataframe[combined_boolean]
     return dataframe_filtered
 
@@ -170,6 +220,54 @@ def csv_directories_to_dataframe(
     dataframe_all.reset_index(inplace = True, drop = True)
     return dataframe_all
 
+def wide_csv_directories_to_dataframe(
+    top_directory,
+    timestamp_column_name,
+    anchor_data_column_names,
+    object_id_column_name,
+    directory_filter = None,
+    directory_parser = None,
+    filename_filter = None,
+    filename_parser = None,
+    add_ids = {},
+    object_ids = None,
+    start_timestamp = None,
+    end_timestamp = None
+):
+    dataframes = []
+    directory_entries = os.listdir(top_directory)
+    for directory_entry in directory_entries:
+        path = os.path.join(top_directory, directory_entry)
+        if os.path.isdir(path) and (directory_filter is None or directory_filter.match(directory_entry)):
+            if directory_parser is not None:
+                additional_ids = directory_parser(directory_entry)
+                add_ids.update(additional_ids)
+            dataframe = wide_csv_files_to_dataframe(
+                directory = path,
+                timestamp_column_name = timestamp_column_name,
+                anchor_data_column_names = anchor_data_column_names,
+                object_id_column_name = object_id_column_name,
+                filename_filter = filename_filter,
+                filename_parser = filename_parser,
+                add_ids = add_ids,
+                object_ids = object_ids,
+                start_timestamp = start_timestamp,
+                end_timestamp = end_timestamp
+            )
+            if dataframe is not None and len(dataframe) > 0:
+                print('Adding {} rows from directory {} spanning {} to {}'.format(
+                    len(dataframe),
+                    path,
+                    dataframe[DEFAULT_TIMESTAMP_COLUMN_NAME].min().isoformat(),
+                    dataframe[DEFAULT_TIMESTAMP_COLUMN_NAME].max().isoformat()))
+                dataframes.append(dataframe)
+    if len(dataframes) == 0:
+        return None
+    dataframe_all = pd.concat(dataframes, ignore_index = True)
+    dataframe_all.sort_values(DEFAULT_TIMESTAMP_COLUMN_NAME, inplace=True)
+    dataframe_all.reset_index(inplace = True, drop = True)
+    return dataframe_all
+
 def csv_files_to_dataframe(
     directory,
     filename_filter = None,
@@ -227,6 +325,57 @@ def csv_files_to_dataframe(
         DEFAULT_ANCHOR_ID_COLUMN_NAME,
         DEFAULT_MEASUREMENT_VALUE_COLUMN_NAME
     ]]
+    dataframe_all.sort_values(DEFAULT_TIMESTAMP_COLUMN_NAME, inplace=True)
+    dataframe_all.reset_index(inplace = True, drop = True)
+    return dataframe_all
+
+def wide_csv_files_to_dataframe(
+    directory,
+    timestamp_column_name,
+    anchor_data_column_names,
+    object_id_column_name,
+    filename_filter = None,
+    filename_parser = None,
+    add_ids = {},
+    object_ids = None,
+    start_timestamp = None,
+    end_timestamp = None
+):
+    dataframes = []
+    directory_entries = os.listdir(directory)
+    for directory_entry in directory_entries:
+        path = os.path.join(directory, directory_entry)
+        if not os.path.isdir(path) and (filename_filter is None or filename_filter.match(directory_entry)):
+            if filename_parser is not None:
+                additional_ids = filename_parser(directory_entry)
+                add_ids.update(additional_ids)
+            dataframe = wide_csv_file_to_dataframe(
+                directory = directory,
+                filename = directory_entry,
+                timestamp_column_name = timestamp_column_name,
+                anchor_data_column_names = anchor_data_column_names,
+                object_id_column_name = object_id_column_name
+            )
+            dataframe = add_ids_to_dataframe(
+                dataframe,
+                **add_ids
+            )
+            dataframe = wide_filter_dataframe(
+                dataframe,
+                object_ids,
+                start_timestamp,
+                end_timestamp,
+            )
+            if len(dataframe) > 0:
+                print('Adding {} rows from file {} spanning {} to {}'.format(
+                    len(dataframe),
+                    path,
+                    dataframe[DEFAULT_TIMESTAMP_COLUMN_NAME].min().isoformat(),
+                    dataframe[DEFAULT_TIMESTAMP_COLUMN_NAME].max().isoformat()))
+                dataframes.append(dataframe)
+    if len(dataframes) == 0:
+         return None
+    dataframe_all = pd.concat(dataframes, ignore_index = True)
     dataframe_all.sort_values(DEFAULT_TIMESTAMP_COLUMN_NAME, inplace=True)
     dataframe_all.reset_index(inplace = True, drop = True)
     return dataframe_all
