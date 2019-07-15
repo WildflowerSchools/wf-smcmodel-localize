@@ -1,6 +1,9 @@
 # Task list
 
 * Track down error that is crashing smcmodel for de-d5-97-f9-0e-92 on 20190605
+* Add functionality to migrate data from current CSV files to DatabaseConnection
+* Add functionality to create smcmodel.DatabaseMemory from DatabaseConnection (or maybe in smcmodel)
+* Figure out how to separate out code
 * Visualization: show date and time together on x axis
 * Visualization: Make common legend across subplots
 * Visualization: Add standard deviation to plots
