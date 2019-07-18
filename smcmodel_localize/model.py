@@ -92,27 +92,18 @@ class LocalizationModel(SMCModelGeneralTensorflow):
             raise ValueError('Ping success rate out of range')
 
     def parameter_model_sample(self):
-        print(self.room_corners)
-        print(type(self.room_corners))
-        print(self.room_corners.dtype)
         parameters = {
-            'num_objects': tf.constant(self.num_objects, dtype=tf.int32),
-            'num_anchors': tf.constant(self.num_anchors, dtype = tf.int32),
-            'num_moving_object_dimensions': tf.constant(self.num_moving_object_dimensions, dtype = tf.int32),
-            'num_fixed_object_dimensions': tf.constant(self.num_fixed_object_dimensions, dtype = tf.int32),
             'fixed_object_positions': tf.constant(self.fixed_object_positions, dtype=tf.float32),
-            'room_corners': tf.constant(self.room_corners, dtype=tf.float32),
             'anchor_positions': tf.constant(self.anchor_positions, dtype = tf.float32),
             'reference_time_interval': tf.constant(self.reference_time_interval, dtype=tf.float32),
             'reference_drift': tf.constant(self.reference_drift, dtype=tf.float32),
-            'minimum_drift': tf.constant(self.minimum_drift, dtype=tf.float32),
             'ping_success_rate': tf.constant(self.ping_success_rate, dtype=tf.float32)
         }
         return parameters
 
     def initial_model_sample(self, num_samples, parameters):
-        room_corners = parameters['room_corners']
-        num_objects = parameters['num_objects']
+        num_objects = self.num_objects
+        room_corners = tf.constant(self.room_corners, dtype=tf.float32)
         room_distribution = tfp.distributions.Uniform(
             low = room_corners[0],
             high= room_corners[1]
@@ -124,11 +115,11 @@ class LocalizationModel(SMCModelGeneralTensorflow):
         return(initial_state)
 
     def transition_model_sample(self, current_state, current_time, next_time, parameters):
+        minimum_drift = self.minimum_drift
+        room_corners = tf.constant(self.room_corners, dtype=tf.float32)
         current_moving_object_positions = current_state['moving_object_positions']
         reference_time_interval = parameters['reference_time_interval']
         reference_drift = parameters['reference_drift']
-        minimum_drift = parameters['minimum_drift']
-        room_corners = parameters['room_corners']
         time_difference = tf.cast(next_time - current_time, dtype=tf.float32)
         calculated_drift = reference_drift*tf.sqrt(time_difference/reference_time_interval)
         drift = tf.maximum(calculated_drift, minimum_drift)
@@ -150,8 +141,8 @@ class LocalizationModel(SMCModelGeneralTensorflow):
         return object_positions
 
     def object_positions_with_fixed_dimensions(self, state, parameters):
-        num_objects = parameters['num_objects']
-        num_fixed_object_dimensions = parameters['num_fixed_object_dimensions']
+        num_objects = self.num_objects
+        num_fixed_object_dimensions = self.num_fixed_object_dimensions
         moving_object_positions = state['moving_object_positions']
         fixed_object_positions = parameters['fixed_object_positions']
         num_samples = tf.shape(moving_object_positions)[0]
@@ -252,28 +243,8 @@ class LocalizationModel(SMCModelGeneralTensorflow):
 def parameter_structure_generator(num_anchors, num_objects, num_moving_object_dimensions, num_fixed_object_dimensions):
     num_dimensions = num_moving_object_dimensions + num_fixed_object_dimensions
     parameter_structure = {
-        'num_objects': {
-            'shape': [],
-            'type': 'int32'
-        },
-        'num_anchors': {
-            'shape': [],
-            'type': 'int32'
-        },
-        'num_moving_object_dimensions': {
-            'shape': [],
-            'type': 'int32'
-        },
-        'num_fixed_object_dimensions': {
-            'shape': [],
-            'type': 'int32'
-        },
         'fixed_object_positions': {
             'shape': [num_objects, num_fixed_object_dimensions],
-            'type': 'float32'
-        },
-        'room_corners': {
-            'shape': [2, num_moving_object_dimensions],
             'type': 'float32'
         },
         'anchor_positions': {
