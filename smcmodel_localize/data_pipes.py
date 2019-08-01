@@ -167,3 +167,11 @@ def state_summary_arrays_to_df(
         columns = position_sd_field_names)
     df = pd.concat((timestamp_object_id_df, position_means_df, position_sds_df), axis = 1)
     return df
+
+def state_summary_df_to_data_list(
+    state_summary_df
+):
+    data_list = state_summary_df.to_dict(orient = 'records')
+    for i in range(len(data_list)):
+        data_list[i]['timestamp'] = data_list[i]['timestamp'].to_pydatetime()
+    return data_list
