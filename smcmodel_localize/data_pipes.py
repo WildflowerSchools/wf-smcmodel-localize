@@ -4,11 +4,11 @@ import pandas as pd
 import numpy as np
 import itertools
 
-def list_to_df(data_list):
+def observation_data_list_to_df(data_list):
     df = pd.DataFrame(data_list)
     return df
 
-def df_to_arrays(
+def observation_df_to_arrays(
     dataframe,
     measurement_value_field_name,
     timestamp_field_name = 'timestamp',
@@ -60,7 +60,7 @@ def df_to_arrays(
     }
     return arrays
 
-def arrays_to_observation_data_source(arrays, measurement_value_field_name):
+def observation_arrays_to_data_source(arrays, measurement_value_field_name):
     structure = smcmodel_localize.model.observation_structure_generator(
         num_anchors = len(arrays['anchor_ids']),
         num_objects = len(arrays['object_ids']),
