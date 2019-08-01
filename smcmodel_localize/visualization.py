@@ -7,7 +7,8 @@ import os
 register_matplotlib_converters()
 
 def plot_positions(
-    state_summary_database,
+    state_summary_data_destination,
+    # state_summary_database,
     start_timestamp = None,
     end_timestamp = None,
     title_object_names = None,
@@ -23,9 +24,11 @@ def plot_positions(
     output_filename_extension = 'png',
     show = False
 ):
-    state_summary_timestamps, state_summary_time_series = state_summary_database.fetch_data(
-        start_timestamp = start_timestamp,
-        end_timestamp = end_timestamp)
+    state_summary_timestamps = state_summary_data_destination.timestamps
+    state_summary_time_series = state_summary_data_destination.array_dict
+    # state_summary_timestamps, state_summary_time_series = state_summary_database.fetch_data(
+    #     start_timestamp = start_timestamp,
+    #     end_timestamp = end_timestamp)
     num_objects = state_summary_time_series['moving_object_positions_mean'].shape[2]
     num_position_axes = state_summary_time_series['moving_object_positions_mean'].shape[3]
     state_summary_timestamps_np = datetime_conversion.to_numpy_datetimes(state_summary_timestamps)
@@ -70,7 +73,8 @@ def plot_positions(
             plt.show()
 
 def plot_positions_topdown(
-    state_summary_database,
+    state_summary_data_destination,
+    # state_summary_database,
     start_timestamp = None,
     end_timestamp = None,
     title_object_names = None,
@@ -85,9 +89,11 @@ def plot_positions_topdown(
     output_filename_extension = 'png',
     show = False
     ):
-    state_summary_timestamps, state_summary_time_series = state_summary_database.fetch_data(
-        start_timestamp = start_timestamp,
-        end_timestamp = end_timestamp)
+    state_summary_timestamps = state_summary_data_destination.timestamps
+    state_summary_time_series = state_summary_data_destination.array_dict
+    # state_summary_timestamps, state_summary_time_series = state_summary_database.fetch_data(
+    #     start_timestamp = start_timestamp,
+    #     end_timestamp = end_timestamp)
     num_objects = state_summary_time_series['moving_object_positions_mean'].shape[2]
     state_summary_timestamps_np = datetime_conversion.to_numpy_datetimes(state_summary_timestamps)
     for object_index in range(num_objects):
@@ -128,7 +134,8 @@ def plot_positions_topdown(
             plt.show()
 
 def plot_state_summary_timestamp_density(
-    state_summary_database,
+    state_summary_data_destination,
+    # state_summary_database,
     start_timestamp = None,
     end_timestamp = None,
     bins = 100,
@@ -142,9 +149,11 @@ def plot_state_summary_timestamp_density(
     output_filename_extension = 'png',
     show = False
     ):
-    state_summary_timestamps, state_summary_time_series = state_summary_database.fetch_data(
-        start_timestamp = start_timestamp,
-        end_timestamp = end_timestamp)
+    state_summary_timestamps = state_summary_data_destination.timestamps
+    state_summary_time_series = state_summary_data_destination.array_dict
+    # state_summary_timestamps, state_summary_time_series = state_summary_database.fetch_data(
+    #     start_timestamp = start_timestamp,
+    #     end_timestamp = end_timestamp)
     state_summary_timestamps_np = datetime_conversion.to_numpy_datetimes(state_summary_timestamps)
     date_formatter = mdates.DateFormatter('%H:%M')
     fig, ax = plt.subplots()
@@ -172,7 +181,8 @@ def plot_state_summary_timestamp_density(
         plt.show()
 
 def plot_num_samples(
-    state_summary_database,
+    state_summary_data_destination,
+    # state_summary_database,
     start_timestamp = None,
     end_timestamp = None,
     timezone_name = 'UTC',
@@ -185,9 +195,11 @@ def plot_num_samples(
     output_filename_extension = 'png',
     show = False
     ):
-    state_summary_timestamps, state_summary_time_series = state_summary_database.fetch_data(
-        start_timestamp = start_timestamp,
-        end_timestamp = end_timestamp)
+    state_summary_timestamps = state_summary_data_destination.timestamps
+    state_summary_time_series = state_summary_data_destination.array_dict
+    # state_summary_timestamps, state_summary_time_series = state_summary_database.fetch_data(
+    #     start_timestamp = start_timestamp,
+    #     end_timestamp = end_timestamp)
     state_summary_timestamps_np = datetime_conversion.to_numpy_datetimes(state_summary_timestamps)
     date_formatter = mdates.DateFormatter('%H:%M')
     fig, ax = plt.subplots()

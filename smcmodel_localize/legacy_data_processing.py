@@ -1,5 +1,5 @@
 import smcmodel_localize.model
-from smcmodel.databases.memory import DatabaseMemory
+# from smcmodel.databases.memory import DatabaseMemory
 import datetime_conversion
 import pandas as pd
 import numpy as np
@@ -569,15 +569,15 @@ def dataframe_to_arrays_by_object(dataframe, measurement_value_name):
         )
     return arrays_dict
 
-def arrays_to_observation_database(arrays, measurement_value_name):
-    observation_structure = smcmodel_localize.model.observation_structure_generator(arrays['num_anchors'], arrays['num_objects'], measurement_value_name)
-    observation_time_series_data = {measurement_value_name: arrays[measurement_value_name]}
-    observation_database = DatabaseMemory(
-        structure = observation_structure,
-        num_samples = 1,
-        timestamps = arrays['timestamps'],
-        time_series_data = observation_time_series_data)
-    return observation_database
+# def arrays_to_observation_database(arrays, measurement_value_name):
+#     observation_structure = smcmodel_localize.model.observation_structure_generator(arrays['num_anchors'], arrays['num_objects'], measurement_value_name)
+#     observation_time_series_data = {measurement_value_name: arrays[measurement_value_name]}
+#     observation_database = DatabaseMemory(
+#         structure = observation_structure,
+#         num_samples = 1,
+#         timestamps = arrays['timestamps'],
+#         time_series_data = observation_time_series_data)
+#     return observation_database
 
 def dataframe_to_pkl_csv_files(
     dataframe,
