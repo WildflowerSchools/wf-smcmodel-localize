@@ -118,3 +118,11 @@ def get_anchor_info_from_csv_file(
         anchor_names = anchor_info_dataframe[anchor_name_column_name].values.tolist()
         anchor_info['anchor_names'] = anchor_names
     return anchor_info
+
+def create_state_summary_data_destination(num_objects, num_moving_object_dimensions):
+    structure = smcmodel_localize.model.state_summary_structure_generator(num_objects, num_moving_object_dimensions)
+    state_summary_data_destination = smcmodel.data_pipes.DataDestinationArrayDict(
+        structure = structure,
+        num_samples = 1
+    )
+    return state_summary_data_destination
