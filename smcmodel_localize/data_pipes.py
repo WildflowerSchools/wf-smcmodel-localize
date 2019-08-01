@@ -126,3 +126,12 @@ def create_state_summary_data_destination(num_objects, num_moving_object_dimensi
         num_samples = 1
     )
     return state_summary_data_destination
+
+def state_summary_data_destination_to_arrays(
+    state_summary_data_destination
+):
+    arrays = {
+        'timestamps': state_summary_data_destination.timestamps
+    }
+    arrays.update(state_summary_data_destination.array_dict)
+    return arrays
