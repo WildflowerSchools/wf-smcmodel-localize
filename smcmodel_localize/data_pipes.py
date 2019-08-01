@@ -72,3 +72,49 @@ def arrays_to_observation_data_source(arrays, measurement_value_field_name):
         timestamps = arrays['timestamps'],
         array_dict = arrays)
     return data_source
+
+def get_object_info_from_csv_file(
+    object_ids,
+    path,
+    object_id_column_name,
+    fixed_object_positions_column_names,
+    object_name_column_name = None
+):
+    object_info_dataframe = pd.DataFrame.from_dict({object_id_column_name: object_ids})
+    file_dataframe = pd.read_csv(path)
+    object_info_dataframe = object_info_dataframe.merge(
+        right = file_dataframe,
+        how = 'left',
+        left_on = object_id_column_name,
+        right_on = object_id_column_name)
+    fixed_object_positions = object_info_dataframe[fixed_object_positions_column_names].values
+    object_info = {
+        'fixed_object_positions': fixed_object_positions
+    }
+    if object_name_column_name is not None:
+        object_names = object_info_dataframe[object_name_column_name].values.tolist()
+        object_info['object_names'] = object_names
+    return object_info
+
+def get_anchor_info_from_csv_file(
+    anchor_ids,
+    path,
+    anchor_id_column_name,
+    anchor_positions_column_names,
+    anchor_name_column_name = None
+):
+    anchor_info_dataframe = pd.DataFrame.from_dict({anchor_id_column_name: anchor_ids})
+    file_dataframe = pd.read_csv(path)
+    anchor_info_dataframe = anchor_info_dataframe.merge(
+        right = file_dataframe,
+        how = 'left',
+        left_on = anchor_id_column_name,
+        right_on = anchor_id_column_name)
+    anchor_positions = anchor_info_dataframe[anchor_positions_column_names].values
+    anchor_info = {
+        'anchor_positions': anchor_positions
+    }
+    if anchor_name_column_name is not None:
+        anchor_names = anchor_info_dataframe[anchor_name_column_name].values.tolist()
+        anchor_info['anchor_names'] = anchor_names
+    return anchor_info
