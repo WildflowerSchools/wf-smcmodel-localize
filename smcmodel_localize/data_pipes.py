@@ -135,3 +135,35 @@ def state_summary_data_destination_to_arrays(
     }
     arrays.update(state_summary_data_destination.array_dict)
     return arrays
+
+def state_summary_arrays_to_df(
+    state_summary_arrays,
+    object_ids,
+    position_mean_field_names,
+    position_sd_field_names
+):
+    timestamps = state_summary_arrays['timestamps']
+    position_means = state_summary_arrays['moving_object_positions_mean']
+    position_sds = state_summary_arrays['moving_object_positions_sd']
+    num_timestamps = len(timestamps)
+    num_object_ids = len(object_ids)
+    num_spatial_dimensions = len(position_mean_field_names)
+    timestamps_converted = pd.to_datetime(timestamps, unit = 's').tz_localize('UTC')
+    timestamp_object_id_df = pd.DataFrame(
+        list(itertools.product(
+            timestamps_converted,
+            object_ids
+        )),
+        columns = [
+            'timestamp',
+            'object_id'
+        ]
+    )
+    position_means_df = pd.DataFrame(
+        position_means.reshape((num_timestamps*num_object_ids, num_spatial_dimensions)),
+        columns = position_mean_field_names)
+    position_sds_df = pd.DataFrame(
+        position_sds.reshape((num_timestamps*num_object_ids, num_spatial_dimensions)),
+        columns = position_sd_field_names)
+    df = pd.concat((timestamp_object_id_df, position_means_df, position_sds_df), axis = 1)
+    return df
