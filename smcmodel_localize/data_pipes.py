@@ -183,6 +183,24 @@ def create_state_summary_data_destination(num_objects, num_moving_object_dimensi
     )
     return state_summary_data_destination
 
+def write_output_data(
+    database_connection,
+    state_summary_data_destination,
+    object_ids,
+    position_mean_field_names,
+    position_sd_field_names
+):
+    state_summary_arrays = state_summary_data_destination_to_arrays(state_summary_data_destination = state_summary_data_destination)
+    state_summary_df = state_summary_arrays_to_df(
+        state_summary_arrays = state_summary_arrays,
+        object_ids = object_ids,
+        position_mean_field_names = position_mean_field_names,
+        position_sd_field_names = position_sd_field_names
+    )
+    state_summary_data_list = state_summary_df_to_data_list(state_summary_df = state_summary_df)
+    database_connection.write_data_object_time_series(state_summary_data_list)
+    return state_summary_arrays
+
 def state_summary_data_destination_to_arrays(
     state_summary_data_destination
 ):
