@@ -4,9 +4,61 @@ import pandas as pd
 import numpy as np
 import itertools
 
+def prepare_observation_data(
+    database_connection,
+    measurement_value_field_name,
+    start_time = None,
+    end_time = None,
+    object_ids = None,
+    measurement_value_min = None,
+    measurement_value_max = None
+):
+    observation_data_list = database_connection.fetch_data_object_time_series(
+        start_time = start_time,
+        end_time = end_time,
+        object_ids = object_ids
+    )
+    observation_df = observation_data_list_to_df(observation_data_list)
+    observation_df = filter_observation_df(
+        dataframe = observation_df,
+        measurement_value_field_name = measurement_value_field_name,
+        measurement_value_min = measurement_value_min,
+        measurement_value_max = measurement_value_max
+    )
+    observation_arrays = observation_df_to_arrays(
+        dataframe = observation_df,
+        measurement_value_field_name = measurement_value_field_name)
+    observation_data_source = observation_arrays_to_data_source(
+        arrays = observation_arrays,
+        measurement_value_field_name = measurement_value_field_name
+    )
+    observation_data = {
+        'observation_data_source': observation_data_source,
+        'observation_arrays': observation_arrays,
+        'num_timestamps': len(observation_arrays['timestamps']),
+        'num_anchors': len(observation_arrays['anchor_ids']),
+        'num_objects': len(observation_arrays['object_ids']),
+        'anchor_ids': observation_arrays['anchor_ids'],
+        'object_ids': observation_arrays['object_ids']
+    }
+    return observation_data
+
 def observation_data_list_to_df(data_list):
     df = pd.DataFrame(data_list)
     return df
+
+def filter_observation_df(
+    dataframe,
+    measurement_value_field_name,
+    measurement_value_min = None,
+    measurement_value_max = None
+):
+    if measurement_value_min is not None:
+        dataframe = dataframe[dataframe[measurement_value_field_name] > measurement_value_min]
+    if measurement_value_max is not None:
+        dataframe = dataframe[dataframe[measurement_value_field_name] < measurement_value_max]
+    dataframe = dataframe.reset_index(drop = True)
+    return dataframe
 
 def observation_df_to_arrays(
     dataframe,
