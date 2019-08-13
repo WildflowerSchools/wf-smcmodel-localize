@@ -51,11 +51,9 @@ def plot_positions(
         comparison_timestamp_data_boolean = np.full(comparison_timestamp_data_np.shape, True)
         if start_timestamp is not None:
             comparison_data_start_timestamp_boolean = np.greater_equal(comparison_timestamp_data_np, start_timestamp_np)
-            print(np.sum(comparison_data_start_timestamp_boolean))
             comparison_timestamp_data_boolean = np.logical_and(comparison_timestamp_data_boolean, comparison_data_start_timestamp_boolean)
         if end_timestamp is not None:
             comparison_data_end_timestamp_boolean = np.less_equal(comparison_timestamp_data_np, end_timestamp_np)
-            print(np.sum(comparison_data_end_timestamp_boolean))
             comparison_timestamp_data_boolean = np.logical_and(comparison_timestamp_data_boolean, comparison_data_end_timestamp_boolean)
         if comparison_position_data_label is None:
             comparison_position_data_label = 'Comparison position data'
@@ -148,11 +146,9 @@ def plot_positions_topdown(
         comparison_timestamp_data_boolean = np.full(comparison_timestamp_data_np.shape, True)
         if start_timestamp is not None:
             comparison_data_start_timestamp_boolean = np.greater_equal(comparison_timestamp_data_np, start_timestamp_np)
-            print(np.sum(comparison_data_start_timestamp_boolean))
             comparison_timestamp_data_boolean = np.logical_and(comparison_timestamp_data_boolean, comparison_data_start_timestamp_boolean)
         if end_timestamp is not None:
             comparison_data_end_timestamp_boolean = np.less_equal(comparison_timestamp_data_np, end_timestamp_np)
-            print(np.sum(comparison_data_end_timestamp_boolean))
             comparison_timestamp_data_boolean = np.logical_and(comparison_timestamp_data_boolean, comparison_data_end_timestamp_boolean)
         if comparison_position_data_label is None:
             comparison_position_data_label = 'Comparison position data'
