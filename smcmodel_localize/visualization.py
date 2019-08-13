@@ -57,7 +57,7 @@ def plot_positions(
             if comparison_position_data is not None:
                 axes[position_axis_index].plot(
                     comparison_timestamp_data_np[:],
-                    comparison_position_data[:, position_axis_index],
+                    comparison_position_data[:, object_index, position_axis_index],
                     color='orange',
                     label = comparison_position_data_label
                 )
@@ -137,8 +137,8 @@ def plot_positions_topdown(
         fig, ax = plt.subplots()
         if comparison_position_data is not None:
             ax.plot(
-                comparison_position_data[:, 0],
-                comparison_position_data[:, 1],
+                comparison_position_data[:, object_index, 0],
+                comparison_position_data[:, object_index, 1],
                 color='orange',
                 label = comparison_position_data_label
             )
