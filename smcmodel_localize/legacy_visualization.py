@@ -59,7 +59,7 @@ def plot_positions(
             comparison_timestamp_data_boolean = np.logical_and(comparison_timestamp_data_boolean, comparison_data_end_timestamp_boolean)
         if comparison_position_data_label is None:
             comparison_position_data_label = 'Comparison position data'
-    date_formatter = mdates.DateFormatter('%H:%M')
+    date_formatter = mdates.DateFormatter('%H:%M:%S')
     for object_index in range(num_objects):
         if title_object_names is not None:
             title_string = title_object_names[object_index]
@@ -218,7 +218,7 @@ def plot_state_summary_timestamp_density(
     state_summary_timestamps = state_summary_data_destination.timestamps
     state_summary_time_series = state_summary_data_destination.array_dict
     state_summary_timestamps_np = datetime_conversion.to_numpy_datetimes(state_summary_timestamps)
-    date_formatter = mdates.DateFormatter('%H:%M')
+    date_formatter = mdates.DateFormatter('%H:%M:%S')
     fig, ax = plt.subplots()
     ax.hist(
         state_summary_timestamps_np,
@@ -260,7 +260,7 @@ def plot_num_samples(
     state_summary_timestamps = state_summary_data_destination.timestamps
     state_summary_time_series = state_summary_data_destination.array_dict
     state_summary_timestamps_np = datetime_conversion.to_numpy_datetimes(state_summary_timestamps)
-    date_formatter = mdates.DateFormatter('%H:%M')
+    date_formatter = mdates.DateFormatter('%H:%M:%S')
     fig, ax = plt.subplots()
     ax.plot(
         state_summary_timestamps_np[:],
