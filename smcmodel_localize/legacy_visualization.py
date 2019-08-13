@@ -1,6 +1,7 @@
 import datetime_conversion
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import numpy as np
 from pandas.plotting import register_matplotlib_converters
 import os
 
@@ -8,13 +9,15 @@ register_matplotlib_converters()
 
 def plot_positions(
     state_summary_data_destination,
-    # state_summary_database,
     start_timestamp = None,
     end_timestamp = None,
     title_object_names = None,
     title_addendum = None,
     position_axes_names = ['$x$', '$y$'],
     timezone_name = 'UTC',
+    comparison_timestamp_data = None,
+    comparison_position_data = None,
+    comparison_position_data_label = None,
     x_size_inches = 7.5,
     y_size_inches = 10,
     save = True,
@@ -26,13 +29,35 @@ def plot_positions(
 ):
     state_summary_timestamps = state_summary_data_destination.timestamps
     state_summary_time_series = state_summary_data_destination.array_dict
-    # state_summary_timestamps, state_summary_time_series = state_summary_database.fetch_data(
-    #     start_timestamp = start_timestamp,
-    #     end_timestamp = end_timestamp)
     num_objects = state_summary_time_series['moving_object_positions_mean'].shape[2]
     num_position_axes = state_summary_time_series['moving_object_positions_mean'].shape[3]
     state_summary_timestamps_np = datetime_conversion.to_numpy_datetimes(state_summary_timestamps)
-    date_formatter = mdates.DateFormatter('%H:%M')
+    state_summary_timestamps_boolean = np.full(state_summary_timestamps_np.shape, True)
+    if start_timestamp is not None:
+        start_timestamp_np = datetime_conversion.to_numpy_datetime(start_timestamp)
+        start_timestamp_boolean = np.greater_equal(state_summary_timestamps_np, start_timestamp_np)
+        state_summmary_timestamps_boolean = np.logical_and(state_summary_timestamps_boolean, start_timestamp_boolean)
+    if end_timestamp is not None:
+        end_timestamp_np = datetime_conversion.to_numpy_datetime(end_timestamp)
+        end_timestamp_boolean = np.less_equal(state_summary_timestamps_np, end_timestamp_np)
+        state_summary_timestamps_boolean = np.logical_and(state_summary_timestamps_boolean, end_timestamp_boolean)
+    if comparison_position_data is not None:
+        if comparison_timestamp_data is None:
+            if comparison_position_data.shape[0] != state_summary_timestamps_np.shape[0]:
+                raise ValueError('Comparison data length does not match primary data length and no corresponding comparison timestamps are specified')
+            comparison_timestamp_data_np = state_summary_timestamps_np
+        else:
+            comparison_timestamp_data_np = datetime_conversion.to_numpy_datetimes(comparison_timestamp_data)
+        comparison_timestamp_data_boolean = np.full(comparison_timestamp_data_np.shape, True)
+        if start_timestamp is not None:
+            comparison_data_start_timestamp_boolean = np.greater_equal(comparison_timestamp_data_np, start_timestamp_np)
+            comparison_timestamp_data_boolean = np.logical_and(comparison_timestamp_data_boolean, comparison_data_start_timestamp_boolean)
+        if end_timestamp is not None:
+            comparison_data_end_timestamp_boolean = np.less_equal(comparison_timestamp_data_np, end_timestamp_np)
+            comparison_timestamp_data_boolean = np.logical_and(comparison_timestamp_data_boolean, comparison_data_end_timestamp_boolean)
+        if comparison_position_data_label is None:
+            comparison_position_data_label = 'Comparison position data'
+    date_formatter = mdates.DateFormatter('%H:%M:%S')
     for object_index in range(num_objects):
         if title_object_names is not None:
             title_string = title_object_names[object_index]
@@ -42,16 +67,23 @@ def plot_positions(
             title_string += ' ({})'.format(title_addendum)
         fig, axes = plt.subplots(nrows = num_position_axes, ncols = 1, sharex = True)
         for position_axis_index in range(num_position_axes):
+            if comparison_position_data is not None:
+                axes[position_axis_index].plot(
+                    comparison_timestamp_data_np[comparison_timestamp_data_boolean],
+                    comparison_position_data[comparison_timestamp_data_boolean, object_index, position_axis_index],
+                    color='orange',
+                    label = comparison_position_data_label
+                )
             axes[position_axis_index].plot(
-                state_summary_timestamps_np[:],
-                state_summary_time_series['moving_object_positions_mean'][:, 0, object_index, position_axis_index],
+                state_summary_timestamps_np[state_summary_timestamps_boolean],
+                state_summary_time_series['moving_object_positions_mean'][state_summary_timestamps_boolean, 0, object_index, position_axis_index],
                 color='blue',
                 label = 'Mean estimate'
             )
-            lgd = axes[position_axis_index].legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
             axes[position_axis_index].set_xlabel('Time ({})'.format(timezone_name))
             axes[position_axis_index].set_ylabel('{} position'.format(position_axes_names[position_axis_index]))
             axes[position_axis_index].xaxis.set_major_formatter(date_formatter)
+        lgd = axes[0].legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
         fig_suptitle = fig.suptitle(title_string, fontsize = 'x-large')
         fig.autofmt_xdate()
         fig.set_size_inches(x_size_inches, y_size_inches)
@@ -74,12 +106,14 @@ def plot_positions(
 
 def plot_positions_topdown(
     state_summary_data_destination,
-    # state_summary_database,
     start_timestamp = None,
     end_timestamp = None,
     title_object_names = None,
     title_addendum = None,
     position_axes_names = ['$x$', '$y$'],
+    comparison_timestamp_data = None,
+    comparison_position_data = None,
+    comparison_position_data_label = None,
     x_size_inches = 7.5,
     y_size_inches = 10,
     save = True,
@@ -91,11 +125,33 @@ def plot_positions_topdown(
     ):
     state_summary_timestamps = state_summary_data_destination.timestamps
     state_summary_time_series = state_summary_data_destination.array_dict
-    # state_summary_timestamps, state_summary_time_series = state_summary_database.fetch_data(
-    #     start_timestamp = start_timestamp,
-    #     end_timestamp = end_timestamp)
     num_objects = state_summary_time_series['moving_object_positions_mean'].shape[2]
     state_summary_timestamps_np = datetime_conversion.to_numpy_datetimes(state_summary_timestamps)
+    state_summary_timestamps_boolean = np.full(state_summary_timestamps_np.shape, True)
+    if start_timestamp is not None:
+        start_timestamp_np = datetime_conversion.to_numpy_datetime(start_timestamp)
+        start_timestamp_boolean = np.greater_equal(state_summary_timestamps_np, start_timestamp_np)
+        state_summmary_timestamps_boolean = np.logical_and(state_summary_timestamps_boolean, start_timestamp_boolean)
+    if end_timestamp is not None:
+        end_timestamp_np = datetime_conversion.to_numpy_datetime(end_timestamp)
+        end_timestamp_boolean = np.less_equal(state_summary_timestamps_np, end_timestamp_np)
+        state_summary_timestamps_boolean = np.logical_and(state_summary_timestamps_boolean, end_timestamp_boolean)
+    if comparison_position_data is not None:
+        if comparison_timestamp_data is None:
+            if comparison_position_data.shape[0] != state_summary_timestamps_np.shape[0]:
+                raise ValueError('Comparison data length does not match primary data length and no corresponding comparison timestamps are specified')
+            comparison_timestamp_data_np = state_summary_timestamps_np
+        else:
+            comparison_timestamp_data_np = datetime_conversion.to_numpy_datetimes(comparison_timestamp_data)
+        comparison_timestamp_data_boolean = np.full(comparison_timestamp_data_np.shape, True)
+        if start_timestamp is not None:
+            comparison_data_start_timestamp_boolean = np.greater_equal(comparison_timestamp_data_np, start_timestamp_np)
+            comparison_timestamp_data_boolean = np.logical_and(comparison_timestamp_data_boolean, comparison_data_start_timestamp_boolean)
+        if end_timestamp is not None:
+            comparison_data_end_timestamp_boolean = np.less_equal(comparison_timestamp_data_np, end_timestamp_np)
+            comparison_timestamp_data_boolean = np.logical_and(comparison_timestamp_data_boolean, comparison_data_end_timestamp_boolean)
+        if comparison_position_data_label is None:
+            comparison_position_data_label = 'Comparison position data'
     for object_index in range(num_objects):
         if title_object_names is not None:
             title_string = title_object_names[object_index]
@@ -104,9 +160,16 @@ def plot_positions_topdown(
         if title_addendum is not None:
             title_string += ' ({})'.format(title_addendum)
         fig, ax = plt.subplots()
+        if comparison_position_data is not None:
+            ax.plot(
+                comparison_position_data[comparison_timestamp_data_boolean, object_index, 0],
+                comparison_position_data[comparison_timestamp_data_boolean, object_index, 1],
+                color='orange',
+                label = comparison_position_data_label
+            )
         ax.plot(
-            state_summary_time_series['moving_object_positions_mean'][:, 0, object_index, 0],
-            state_summary_time_series['moving_object_positions_mean'][:, 0, object_index, 1],
+            state_summary_time_series['moving_object_positions_mean'][state_summary_timestamps_boolean, 0, object_index, 0],
+            state_summary_time_series['moving_object_positions_mean'][state_summary_timestamps_boolean, 0, object_index, 1],
             color='blue',
             label = 'Mean estimate'
         )
@@ -135,7 +198,6 @@ def plot_positions_topdown(
 
 def plot_state_summary_timestamp_density(
     state_summary_data_destination,
-    # state_summary_database,
     start_timestamp = None,
     end_timestamp = None,
     bins = 100,
@@ -151,11 +213,8 @@ def plot_state_summary_timestamp_density(
     ):
     state_summary_timestamps = state_summary_data_destination.timestamps
     state_summary_time_series = state_summary_data_destination.array_dict
-    # state_summary_timestamps, state_summary_time_series = state_summary_database.fetch_data(
-    #     start_timestamp = start_timestamp,
-    #     end_timestamp = end_timestamp)
     state_summary_timestamps_np = datetime_conversion.to_numpy_datetimes(state_summary_timestamps)
-    date_formatter = mdates.DateFormatter('%H:%M')
+    date_formatter = mdates.DateFormatter('%H:%M:%S')
     fig, ax = plt.subplots()
     ax.hist(
         state_summary_timestamps_np,
@@ -182,7 +241,6 @@ def plot_state_summary_timestamp_density(
 
 def plot_num_samples(
     state_summary_data_destination,
-    # state_summary_database,
     start_timestamp = None,
     end_timestamp = None,
     timezone_name = 'UTC',
@@ -197,11 +255,8 @@ def plot_num_samples(
     ):
     state_summary_timestamps = state_summary_data_destination.timestamps
     state_summary_time_series = state_summary_data_destination.array_dict
-    # state_summary_timestamps, state_summary_time_series = state_summary_database.fetch_data(
-    #     start_timestamp = start_timestamp,
-    #     end_timestamp = end_timestamp)
     state_summary_timestamps_np = datetime_conversion.to_numpy_datetimes(state_summary_timestamps)
-    date_formatter = mdates.DateFormatter('%H:%M')
+    date_formatter = mdates.DateFormatter('%H:%M:%S')
     fig, ax = plt.subplots()
     ax.plot(
         state_summary_timestamps_np[:],
