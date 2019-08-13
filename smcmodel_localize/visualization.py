@@ -58,7 +58,7 @@ def plot_positions(
                 axes[position_axis_index].plot(
                     comparison_timestamp_data_np[:],
                     comparison_position_data[:, position_axis_index],
-                    color='green',
+                    color='orange',
                     label = comparison_position_data_label
                 )
             axes[position_axis_index].plot(
@@ -67,10 +67,10 @@ def plot_positions(
                 color='blue',
                 label = 'Mean estimate'
             )
-            lgd = axes[position_axis_index].legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
             axes[position_axis_index].set_xlabel('Time ({})'.format(timezone_name))
             axes[position_axis_index].set_ylabel('{} position'.format(position_axes_names[position_axis_index]))
             axes[position_axis_index].xaxis.set_major_formatter(date_formatter)
+        lgd = axes[0].legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
         fig_suptitle = fig.suptitle(title_string, fontsize = 'x-large')
         fig.autofmt_xdate()
         fig.set_size_inches(x_size_inches, y_size_inches)
@@ -139,7 +139,7 @@ def plot_positions_topdown(
             ax.plot(
                 comparison_position_data[:, 0],
                 comparison_position_data[:, 1],
-                color='green',
+                color='orange',
                 label = comparison_position_data_label
             )
         ax.plot(
