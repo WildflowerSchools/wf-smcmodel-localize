@@ -233,10 +233,12 @@ class LocalizationModel(SMCModelGeneralTensorflow):
         moving_object_positions_mean_expanded = tf.expand_dims(moving_object_positions_mean, 0)
         moving_object_positions_sd_expanded = tf.expand_dims(moving_object_positions_sd, 0)
         num_resample_indices_expanded = tf.expand_dims(num_resample_indices, 0)
+        weights_sum_expanded = tf.expand_dims(weights_sum, 0)
         state_summary = {
             'moving_object_positions_mean': moving_object_positions_mean_expanded,
             'moving_object_positions_sd': moving_object_positions_sd_expanded,
-            'num_resample_indices': num_resample_indices_expanded
+            'num_resample_indices': num_resample_indices_expanded,
+            'weights_sum': weights_sum_expanded
         }
         return state_summary
 
@@ -297,6 +299,10 @@ def state_summary_structure_generator(num_objects, num_moving_object_dimensions)
         'num_resample_indices': {
             'shape': [],
             'type': 'int32'
+        },
+        'weights_sum': {
+            'shape': [],
+            'type': 'float32'
         }
     }
     return state_summary_structure
