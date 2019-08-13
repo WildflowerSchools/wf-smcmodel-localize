@@ -99,6 +99,9 @@ def plot_positions_topdown(
     title_object_names = None,
     title_addendum = None,
     position_axes_names = ['$x$', '$y$'],
+    comparison_timestamp_data = None,
+    comparison_position_data = None,
+    comparison_position_data_label = None,
     x_size_inches = 7.5,
     y_size_inches = 10,
     save = True,
@@ -115,6 +118,15 @@ def plot_positions_topdown(
     #     end_timestamp = end_timestamp)
     num_objects = state_summary_time_series['moving_object_positions_mean'].shape[2]
     state_summary_timestamps_np = datetime_conversion.to_numpy_datetimes(state_summary_timestamps)
+    if comparison_position_data is not None:
+        if comparison_timestamp_data is None:
+            if comparison_position_data.shape[0] != state_summary_timestamps_np.shape[0]:
+                raise ValueError('Comparison data length does not match primary data length and no corresponding comparison timestamps are specified')
+            comparison_timestamp_data_np = state_summary_timestamps_np
+        else:
+            comparison_timestamp_data_np = datetime_conversion.to_numpy_datetimes(comparison_timestamp_data)
+        if comparison_position_data_label is None:
+            comparison_position_data_label = 'Comparison position data'
     for object_index in range(num_objects):
         if title_object_names is not None:
             title_string = title_object_names[object_index]
@@ -123,6 +135,13 @@ def plot_positions_topdown(
         if title_addendum is not None:
             title_string += ' ({})'.format(title_addendum)
         fig, ax = plt.subplots()
+        if comparison_position_data is not None:
+            ax.plot(
+                comparison_position_data[:, 0],
+                comparison_position_data[:, 1],
+                color='green',
+                label = comparison_position_data_label
+            )
         ax.plot(
             state_summary_time_series['moving_object_positions_mean'][:, 0, object_index, 0],
             state_summary_time_series['moving_object_positions_mean'][:, 0, object_index, 1],
