@@ -15,6 +15,9 @@ def plot_positions(
     title_addendum = None,
     position_axes_names = ['$x$', '$y$'],
     timezone_name = 'UTC',
+    comparison_timestamp_data = None,
+    comparison_position_data = None,
+    comparison_position_data_label = None,
     x_size_inches = 7.5,
     y_size_inches = 10,
     save = True,
@@ -32,6 +35,15 @@ def plot_positions(
     num_objects = state_summary_time_series['moving_object_positions_mean'].shape[2]
     num_position_axes = state_summary_time_series['moving_object_positions_mean'].shape[3]
     state_summary_timestamps_np = datetime_conversion.to_numpy_datetimes(state_summary_timestamps)
+    if comparison_position_data is not None:
+        if comparison_timestamp_data is None:
+            if comparison_position_data.shape[0] != state_summary_timestamps_np.shape[0]:
+                raise ValueError('Comparison data length does not match primary data length and no corresponding comparison timestamps are specified')
+            comparison_timestamp_data_np = state_summary_timestamps_np
+        else:
+            comparison_timestamp_data_np = datetime_conversion.to_numpy_datetimes(comparison_timestamp_data)
+        if comparison_position_data_label is None:
+            comparison_position_data_label = 'Comparison position data'
     date_formatter = mdates.DateFormatter('%H:%M')
     for object_index in range(num_objects):
         if title_object_names is not None:
@@ -42,6 +54,13 @@ def plot_positions(
             title_string += ' ({})'.format(title_addendum)
         fig, axes = plt.subplots(nrows = num_position_axes, ncols = 1, sharex = True)
         for position_axis_index in range(num_position_axes):
+            if comparison_position_data is not None:
+                axes[position_axis_index].plot(
+                    comparison_timestamp_data_np[:],
+                    comparison_position_data[:, position_axis_index],
+                    color='green',
+                    label = comparison_position_data_label
+                )
             axes[position_axis_index].plot(
                 state_summary_timestamps_np[:],
                 state_summary_time_series['moving_object_positions_mean'][:, 0, object_index, position_axis_index],
