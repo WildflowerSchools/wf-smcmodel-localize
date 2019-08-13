@@ -222,10 +222,11 @@ class LocalizationModel(SMCModelGeneralTensorflow):
     def state_summary(self, state, log_weights, resample_indices, parameters):
         moving_object_positions = state['moving_object_positions']
         moving_object_positions_squared = tf.square(moving_object_positions)
-        weights = tf.exp(log_weights)
-        weights_sum = tf.reduce_sum(weights)
-        moving_object_positions_mean = tf.tensordot(weights, moving_object_positions, 1)/weights_sum
-        moving_object_positions_squared_mean = tf.tensordot(weights, moving_object_positions_squared, 1)/weights_sum
+        log_weights_renormalized = log_weights - tf.reduce_logsumexp(log_weights)
+        weights_renormalized = tf.exp(log_weights_renormalized)
+        weights_sum = tf.reduce_sum(weights_renormalized)
+        moving_object_positions_mean = tf.tensordot(weights_renormalized, moving_object_positions, 1)
+        moving_object_positions_squared_mean = tf.tensordot(weights_renormalized, moving_object_positions_squared, 1)
         moving_object_positions_var = moving_object_positions_squared_mean - tf.square(moving_object_positions_mean)
         moving_object_positions_sd = tf.sqrt(moving_object_positions_var)
         unique_resample_indices, _ = tf.unique(resample_indices)
@@ -233,10 +234,12 @@ class LocalizationModel(SMCModelGeneralTensorflow):
         moving_object_positions_mean_expanded = tf.expand_dims(moving_object_positions_mean, 0)
         moving_object_positions_sd_expanded = tf.expand_dims(moving_object_positions_sd, 0)
         num_resample_indices_expanded = tf.expand_dims(num_resample_indices, 0)
+        weights_sum_expanded = tf.expand_dims(weights_sum, 0)
         state_summary = {
             'moving_object_positions_mean': moving_object_positions_mean_expanded,
             'moving_object_positions_sd': moving_object_positions_sd_expanded,
-            'num_resample_indices': num_resample_indices_expanded
+            'num_resample_indices': num_resample_indices_expanded,
+            'weights_sum': weights_sum_expanded
         }
         return state_summary
 
@@ -297,6 +300,10 @@ def state_summary_structure_generator(num_objects, num_moving_object_dimensions)
         'num_resample_indices': {
             'shape': [],
             'type': 'int32'
+        },
+        'weights_sum': {
+            'shape': [],
+            'type': 'float32'
         }
     }
     return state_summary_structure
