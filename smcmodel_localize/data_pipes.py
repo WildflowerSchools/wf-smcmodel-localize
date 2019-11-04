@@ -1,5 +1,6 @@
 import smcmodel.data_pipes
 import smcmodel_localize.model
+import smcmodel_localize.model_multilateration
 import pandas as pd
 import numpy as np
 import itertools
@@ -183,6 +184,17 @@ def create_state_summary_data_destination(num_objects, num_moving_object_dimensi
     )
     return state_summary_data_destination
 
+def create_state_summary_data_destination_multilateration(num_objects, num_moving_object_dimensions):
+    structure = smcmodel_localize.model_multilateration.state_summary_structure_generator_multilateration(
+        num_objects,
+        num_moving_object_dimensions
+    )
+    state_summary_data_destination = smcmodel.data_pipes.DataDestinationArrayDict(
+        structure = structure,
+        num_samples = 1
+    )
+    return state_summary_data_destination
+
 def write_output_data(
     database_connection,
     state_summary_data_destination,
@@ -196,6 +208,22 @@ def write_output_data(
         object_ids = object_ids,
         position_mean_field_names = position_mean_field_names,
         position_sd_field_names = position_sd_field_names
+    )
+    state_summary_data_list = state_summary_df_to_data_list(state_summary_df = state_summary_df)
+    database_connection.write_data_object_time_series(state_summary_data_list)
+    return state_summary_arrays
+
+def write_output_data_multilateration(
+    database_connection,
+    state_summary_data_destination,
+    object_ids,
+    position_field_names,
+):
+    state_summary_arrays = state_summary_data_destination_to_arrays(state_summary_data_destination = state_summary_data_destination)
+    state_summary_df = state_summary_arrays_multilateration_to_df(
+        state_summary_arrays = state_summary_arrays,
+        object_ids = object_ids,
+        position_field_names = position_field_names,
     )
     state_summary_data_list = state_summary_df_to_data_list(state_summary_df = state_summary_df)
     database_connection.write_data_object_time_series(state_summary_data_list)
@@ -240,6 +268,33 @@ def state_summary_arrays_to_df(
         position_sds.reshape((num_timestamps*num_object_ids, num_spatial_dimensions)),
         columns = position_sd_field_names)
     df = pd.concat((timestamp_object_id_df, position_means_df, position_sds_df), axis = 1)
+    return df
+
+def state_summary_arrays_multilateration_to_df(
+    state_summary_arrays,
+    object_ids,
+    position_field_names
+):
+    timestamps = state_summary_arrays['timestamps']
+    positions = state_summary_arrays['moving_object_positions_multilateration']
+    num_timestamps = len(timestamps)
+    num_object_ids = len(object_ids)
+    num_spatial_dimensions = len(position_field_names)
+    timestamps_converted = pd.to_datetime(timestamps, unit = 's').tz_localize('UTC')
+    timestamp_object_id_df = pd.DataFrame(
+        list(itertools.product(
+            timestamps_converted,
+            object_ids
+        )),
+        columns = [
+            'timestamp',
+            'object_id'
+        ]
+    )
+    positions_df = pd.DataFrame(
+        positions.reshape((num_timestamps*num_object_ids, num_spatial_dimensions)),
+        columns = position_field_names)
+    df = pd.concat((timestamp_object_id_df, positions_df), axis = 1)
     return df
 
 def state_summary_df_to_data_list(
