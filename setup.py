@@ -11,7 +11,7 @@ BASE_DEPENDENCIES = [
     'tensorflow>=2.2',
     'tensorflow-probability>=0.10.0',
     'pandas>=1.0.5',
-    'scipy==1.4.1', # For compatibility with Tensorflow 2.2
+    'scipy==1.10.0', # For compatibility with Tensorflow 2.2
     'numpy>=1.19.0',
     'tqdm>=4.46.1',
     'python-slugify>=4.0.0',
